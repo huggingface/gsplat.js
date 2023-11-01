@@ -1,8 +1,8 @@
-# splat.js
+# gsplat.js
 
 #### JavaScript Gaussian Splatting library
 
-splat.js is an easy-to-use, general-purpose, open-source 3D Gaussian Splatting library, providing functionality similar to [three.js](https://github.com/mrdoob/three.js) but for Gaussian Splatting.
+gsplat.js is an easy-to-use, general-purpose, open-source 3D Gaussian Splatting library, providing functionality similar to [three.js](https://github.com/mrdoob/three.js) but for Gaussian Splatting.
 
 This library is currently a work-in-progress. Its initial version provides a WebGL renderer based on [antimatter15/splat](https://github.com/antimatter15/splat). Future plans include adding a WebGPU renderer for supported devices and performance optimizations, aiming to approach the capabilities of closed-source implementations like [gsplat.tech](https://gsplat.tech/).
 

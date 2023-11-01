@@ -1,5 +1,5 @@
 {
-  "name": "splat",
+  "name": "gsplat",
   "version": "0.1.0",
   "description": "JavaScript Gaussian Splatting library",
   "main": "dist/index.js",
