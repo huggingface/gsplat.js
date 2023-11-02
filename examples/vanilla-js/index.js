@@ -6,17 +6,28 @@ const scene = new SPLAT.Scene();
 const camera = new SPLAT.Camera();
 const controls = new SPLAT.OrbitControls(camera, canvas);
 
-const url = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bicycle/bicycle-7k.splat";
+async function main() {
+    const url = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bicycle/bicycle-7k.splat";
 
-await SPLAT.Loader.LoadAsync(url, scene, (progress) => {
-    console.log(`Loading: ${progress}`);
-});
+    await SPLAT.Loader.LoadAsync(url, scene, (progress) => {
+        console.log(`Loading: ${progress}`);
+    });
 
-const frame = () => {
-    controls.update();
-    renderer.render(scene, camera);
+    const handleResize = () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    const frame = () => {
+        controls.update();
+        renderer.render(scene, camera);
+
+        requestAnimationFrame(frame);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
 
     requestAnimationFrame(frame);
-};
+}
 
-requestAnimationFrame(frame);
+main();

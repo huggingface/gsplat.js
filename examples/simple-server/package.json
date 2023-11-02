@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "gsplat": "^0.1.1",
+    "gsplat": "^0.1.2",
     "typescript": "^5.0.2",
     "vite": "^4.4.5"
   }
