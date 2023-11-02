@@ -5,8 +5,8 @@ class Matrix3 {
 
     // prettier-ignore
     constructor(n11: number = 1, n12: number = 0, n13: number = 0,
-        n21: number = 0, n22: number = 1, n23: number = 0,
-        n31: number = 0, n32: number = 0, n33: number = 1) {
+                n21: number = 0, n22: number = 1, n23: number = 0,
+                n31: number = 0, n32: number = 0, n33: number = 1) {
         this.buffer = new Array(9);
 
         this.set(
