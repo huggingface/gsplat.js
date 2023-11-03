@@ -4,6 +4,7 @@
 
     "target": "ES2019",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
     "module": "ESNext",                                  /* Specify what module code is generated. */
+    "lib": ["ESNext", "WebWorker", "DOM"],               /* Specify a set of bundled library declaration files that describe the target runtime environment. */
     "declaration": true,                                 /* Generate .d.ts files from TypeScript and JavaScript files in your project. */
     "outDir": "./dist",                                  /* Specify an output folder for all emitted files. */
     "esModuleInterop": true,                             /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */
