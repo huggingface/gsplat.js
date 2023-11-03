@@ -137,6 +137,7 @@ export function createWorker(self: Worker) {
 
         let maxDepth = -Infinity;
         let minDepth = Infinity;
+        console.time("compute depth");
         const sizeList = new Int32Array(vertexCount);
         for (let i = 0; i < vertexCount; i++) {
             const depth =
@@ -149,8 +150,10 @@ export function createWorker(self: Worker) {
             if (depth > maxDepth) maxDepth = depth;
             if (depth < minDepth) minDepth = depth;
         }
+        console.timeEnd("compute depth");
 
         // This is a 16 bit single-pass counting sort
+        console.time("sort");
         const depthInv = (256 * 256) / (maxDepth - minDepth);
         const counts0 = new Uint32Array(256 * 256);
         for (let i = 0; i < vertexCount; i++) {
@@ -216,6 +219,7 @@ export function createWorker(self: Worker) {
             covB[3 * j + 1] = M[1] * M[2] + M[4] * M[5] + M[7] * M[8];
             covB[3 * j + 2] = M[2] * M[2] + M[5] * M[5] + M[8] * M[8];
         }
+        console.timeEnd("sort");
 
         self.postMessage({ covA, center, color, covB, viewProj }, [
             covA.buffer,

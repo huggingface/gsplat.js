@@ -9,9 +9,7 @@ const controls = new SPLAT.OrbitControls(camera, canvas);
 async function main() {
     const url = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bicycle/bicycle-7k.splat";
 
-    await SPLAT.Loader.LoadAsync(url, scene, (progress) => {
-        console.log(`Loading: ${progress}`);
-    });
+    await SPLAT.Loader.LoadAsync(url, scene, null);
 
     const handleResize = () => {
         renderer.setSize(window.innerWidth, window.innerHeight);

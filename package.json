@@ -6,7 +6,9 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build:wasm": "sh ./compile_wasm.sh",
+    "copy:wasm": "ncp ./src/wasm ./dist/wasm",
+    "build": "npm run build:wasm && tsc && npm run copy:wasm",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\""
@@ -27,6 +29,7 @@
     "eslint": "^8.52.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.1",
+    "ncp": "^2.0.0",
     "prettier": "^3.0.3",
     "typescript": "^5.2.2"
   },
