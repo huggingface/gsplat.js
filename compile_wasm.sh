@@ -1,7 +1,9 @@
 #!/bin/bash
-emcc wasm/hello.cpp -o src/wasm/hello.js \
+emcc --bind wasm/sort.cpp -o src/wasm/sort.js \
     -s EXPORT_ES6=1 \
     -s MODULARIZE=1 \
     -s EXPORT_NAME=loadWasm \
-    -s EXPORTED_FUNCTIONS="[_hello]" \
-    -s SINGLE_FILE=1
+    -s EXPORTED_FUNCTIONS="[_sort, _malloc, _free]" \
+    -s SINGLE_FILE=1 \
+    -s ALLOW_MEMORY_GROWTH=1 \
+    -s ENVIRONMENT=worker \

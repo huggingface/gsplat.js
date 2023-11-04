@@ -1,7 +1,7 @@
 import type { Camera } from "../cameras/Camera";
 import type { Scene } from "../core/Scene";
 
-import { createWorker } from "./webgl/utils/worker";
+import SortWorker from "web-worker:./webgl/utils/worker.ts";
 
 import { vertex } from "./webgl/shaders/vertex.glsl";
 import { frag } from "./webgl/shaders/frag.glsl";
@@ -20,7 +20,6 @@ export class WebGLRenderer {
         let activeCamera: Camera;
 
         let worker: Worker;
-        let vertexCount = 0;
 
         let vertexShader: WebGLShader;
         let fragmentShader: WebGLShader;
@@ -79,13 +78,8 @@ export class WebGLRenderer {
         };
 
         const initWebGL = () => {
-            worker = new Worker(
-                URL.createObjectURL(
-                    new Blob(["(", createWorker.toString(), ")(self)"], {
-                        type: "application/javascript",
-                    }),
-                ),
-            );
+            worker = new SortWorker();
+            worker.postMessage({ scene: activeScene });
 
             gl.viewport(0, 0, canvas.width, canvas.height);
 
@@ -171,8 +165,7 @@ export class WebGLRenderer {
 
             worker.onmessage = (e) => {
                 if (e.data.center) {
-                    const { covA, covB, center, color } = e.data;
-                    vertexCount = center.length / 3;
+                    const { center, color, covA, covB } = e.data;
 
                     gl.bindBuffer(gl.ARRAY_BUFFER, centerBuffer);
                     gl.bufferData(gl.ARRAY_BUFFER, center, gl.DYNAMIC_DRAW);
@@ -187,11 +180,6 @@ export class WebGLRenderer {
                     gl.bufferData(gl.ARRAY_BUFFER, covB, gl.DYNAMIC_DRAW);
                 }
             };
-
-            worker.postMessage({
-                buffer: activeScene.data.buffer,
-                vertexCount: activeScene.vertexCount,
-            });
 
             initialized = true;
         };
@@ -211,17 +199,19 @@ export class WebGLRenderer {
             activeCamera.updateProjectionMatrix(canvas.width, canvas.height);
             const viewMatrix = getViewMatrix(activeCamera);
             const viewProj = activeCamera.projectionMatrix.multiply(viewMatrix);
-            worker.postMessage({ view: viewProj.buffer });
+            worker.postMessage({ viewProj: viewProj });
 
-            if (vertexCount > 0) {
+            if (activeScene.vertexCount > 0) {
                 gl.uniformMatrix4fv(u_view, false, viewMatrix.buffer);
-                ext.drawArraysInstancedANGLE(gl.TRIANGLE_FAN, 0, 4, vertexCount);
+                ext.drawArraysInstancedANGLE(gl.TRIANGLE_FAN, 0, 4, activeScene.vertexCount);
             } else {
                 gl.clear(gl.COLOR_BUFFER_BIT);
             }
         };
 
         this.dispose = () => {
+            worker.terminate();
+
             gl.deleteShader(vertexShader);
             gl.deleteShader(fragmentShader);
             gl.deleteProgram(program);
@@ -231,8 +221,6 @@ export class WebGLRenderer {
             gl.deleteBuffer(colorBuffer);
             gl.deleteBuffer(covABuffer);
             gl.deleteBuffer(covBBuffer);
-
-            worker.terminate();
 
             initialized = false;
         };
