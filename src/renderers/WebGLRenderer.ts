@@ -13,8 +13,7 @@ export class WebGLRenderer {
     dispose: () => void;
 
     constructor(canvas: HTMLCanvasElement) {
-        const gl = (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")) as WebGLRenderingContext;
-        const ext = gl.getExtension("ANGLE_instanced_arrays") as ANGLE_instanced_arrays;
+        const gl = canvas.getContext("webgl2", { antialias: false }) as WebGL2RenderingContext;
 
         let activeScene: Scene;
         let activeCamera: Camera;
@@ -29,12 +28,10 @@ export class WebGLRenderer {
         let u_viewport: WebGLUniformLocation;
         let u_focal: WebGLUniformLocation;
         let u_view: WebGLUniformLocation;
+        let u_texture: WebGLUniformLocation;
 
         let positionAttribute: number;
-        let centerAttribute: number;
-        let colorAttribute: number;
-        let covAAttribute: number;
-        let covBAttribute: number;
+        let indexAttribute: number;
 
         let vertexBuffer: WebGLBuffer;
         let centerBuffer: WebGLBuffer;
@@ -135,49 +132,44 @@ export class WebGLRenderer {
             gl.enableVertexAttribArray(positionAttribute);
             gl.vertexAttribPointer(positionAttribute, 2, gl.FLOAT, false, 0, 0);
 
-            centerBuffer = gl.createBuffer() as WebGLBuffer;
-            centerAttribute = gl.getAttribLocation(program, "center");
-            gl.enableVertexAttribArray(centerAttribute);
-            gl.bindBuffer(gl.ARRAY_BUFFER, centerBuffer);
-            gl.vertexAttribPointer(centerAttribute, 3, gl.FLOAT, false, 0, 0);
-            ext.vertexAttribDivisorANGLE(centerAttribute, 1);
+            const texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
 
-            colorBuffer = gl.createBuffer() as WebGLBuffer;
-            colorAttribute = gl.getAttribLocation(program, "color");
-            gl.enableVertexAttribArray(colorAttribute);
-            gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-            gl.vertexAttribPointer(colorAttribute, 4, gl.FLOAT, false, 0, 0);
-            ext.vertexAttribDivisorANGLE(colorAttribute, 1);
+            u_texture = gl.getUniformLocation(program, "u_texture") as WebGLUniformLocation;
+            gl.uniform1i(u_texture, 0);
 
-            covABuffer = gl.createBuffer() as WebGLBuffer;
-            covAAttribute = gl.getAttribLocation(program, "covA");
-            gl.enableVertexAttribArray(covAAttribute);
-            gl.bindBuffer(gl.ARRAY_BUFFER, covABuffer);
-            gl.vertexAttribPointer(covAAttribute, 3, gl.FLOAT, false, 0, 0);
-            ext.vertexAttribDivisorANGLE(covAAttribute, 1);
-
-            covBBuffer = gl.createBuffer() as WebGLBuffer;
-            covBAttribute = gl.getAttribLocation(program, "covB");
-            gl.enableVertexAttribArray(covBAttribute);
-            gl.bindBuffer(gl.ARRAY_BUFFER, covBBuffer);
-            gl.vertexAttribPointer(covBAttribute, 3, gl.FLOAT, false, 0, 0);
-            ext.vertexAttribDivisorANGLE(covBAttribute, 1);
+            const indexBuffer = gl.createBuffer() as WebGLBuffer;
+            indexAttribute = gl.getAttribLocation(program, "index");
+            gl.enableVertexAttribArray(indexAttribute);
+            gl.bindBuffer(gl.ARRAY_BUFFER, indexBuffer);
+            gl.vertexAttribIPointer(indexAttribute, 1, gl.INT, 0, 0);
+            gl.vertexAttribDivisor(indexAttribute, 1);
 
             worker.onmessage = (e) => {
-                if (e.data.center) {
-                    const { center, color, covA, covB } = e.data;
-
-                    gl.bindBuffer(gl.ARRAY_BUFFER, centerBuffer);
-                    gl.bufferData(gl.ARRAY_BUFFER, center, gl.DYNAMIC_DRAW);
-
-                    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-                    gl.bufferData(gl.ARRAY_BUFFER, color, gl.DYNAMIC_DRAW);
-
-                    gl.bindBuffer(gl.ARRAY_BUFFER, covABuffer);
-                    gl.bufferData(gl.ARRAY_BUFFER, covA, gl.DYNAMIC_DRAW);
-
-                    gl.bindBuffer(gl.ARRAY_BUFFER, covBBuffer);
-                    gl.bufferData(gl.ARRAY_BUFFER, covB, gl.DYNAMIC_DRAW);
+                if (e.data.texdata) {
+                    const { texdata, texwidth, texheight } = e.data;
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                    gl.texImage2D(
+                        gl.TEXTURE_2D,
+                        0,
+                        gl.RGBA32UI,
+                        texwidth,
+                        texheight,
+                        0,
+                        gl.RGBA_INTEGER,
+                        gl.UNSIGNED_INT,
+                        texdata,
+                    );
+                    gl.activeTexture(gl.TEXTURE0);
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                } else if (e.data.depthIndex) {
+                    const { depthIndex } = e.data;
+                    gl.bindBuffer(gl.ARRAY_BUFFER, indexBuffer);
+                    gl.bufferData(gl.ARRAY_BUFFER, depthIndex, gl.STATIC_DRAW);
                 }
             };
 
@@ -203,7 +195,8 @@ export class WebGLRenderer {
 
             if (activeScene.vertexCount > 0) {
                 gl.uniformMatrix4fv(u_view, false, viewMatrix.buffer);
-                ext.drawArraysInstancedANGLE(gl.TRIANGLE_FAN, 0, 4, activeScene.vertexCount);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, activeScene.vertexCount);
             } else {
                 gl.clear(gl.COLOR_BUFFER_BIT);
             }

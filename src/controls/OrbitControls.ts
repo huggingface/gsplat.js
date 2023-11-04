@@ -10,7 +10,7 @@ class OrbitControls {
     orbitSpeed: number = 1;
     panSpeed: number = 1;
     zoomSpeed: number = 1;
-    dampening: number = 0.3;
+    dampening: number = 0.1;
 
     update: () => void;
     dispose: () => void;

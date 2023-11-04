@@ -1,75 +1,59 @@
-export const vertex = /* glsl */ `
-precision mediump float;
-attribute vec2 position;
+export const vertex = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
 
-attribute vec4 color;
-attribute vec3 center;
-attribute vec3 covA;
-attribute vec3 covB;
-
+uniform highp usampler2D u_texture;
 uniform mat4 projection, view;
 uniform vec2 focal;
 uniform vec2 viewport;
 
-varying vec4 vColor;
-varying vec2 vPosition;
+in vec2 position;
+in int index;
 
-mat3 transpose(mat3 m) {
-    return mat3(
-        m[0][0], m[1][0], m[2][0],
-        m[0][1], m[1][1], m[2][1],
-        m[0][2], m[1][2], m[2][2]
-    );
-}
+out vec4 vColor;
+out vec2 vPosition;
 
 void main () {
-    vec4 camspace = view * vec4(center, 1);
-    vec4 pos2d = projection * camspace;
+    uvec4 cen = texelFetch(u_texture, ivec2((uint(index) & 0x3ffu) << 1, uint(index) >> 10), 0);
+    vec4 cam = view * vec4(uintBitsToFloat(cen.xyz), 1);
+    vec4 pos2d = projection * cam;
 
-    float bounds = 1.2 * pos2d.w;
-    if (pos2d.z < -pos2d.w || pos2d.x < -bounds || pos2d.x > bounds
-        || pos2d.y < -bounds || pos2d.y > bounds) {
+    float clip = 1.2 * pos2d.w;
+    if (pos2d.z < -pos2d.w || pos2d.x < -clip || pos2d.x > clip || pos2d.y < -clip || pos2d.y > clip) {
         gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
         return;
     }
 
-    mat3 Vrk = mat3(
-        covA.x, covA.y, covA.z, 
-        covA.y, covB.x, covB.y,
-        covA.z, covB.y, covB.z
-    );
+    uvec4 cov = texelFetch(u_texture, ivec2(((uint(index) & 0x3ffu) << 1) | 1u, uint(index) >> 10), 0);
+    vec2 u1 = unpackHalf2x16(cov.x), u2 = unpackHalf2x16(cov.y), u3 = unpackHalf2x16(cov.z);
+    mat3 Vrk = mat3(u1.x, u1.y, u2.x, u1.y, u2.y, u3.x, u2.x, u3.x, u3.y);
 
     mat3 J = mat3(
-        focal.x / camspace.z, 0., -(focal.x * camspace.x) / (camspace.z * camspace.z), 
-        0., -focal.y / camspace.z, (focal.y * camspace.y) / (camspace.z * camspace.z), 
+        focal.x / cam.z, 0., -(focal.x * cam.x) / (cam.z * cam.z), 
+        0., -focal.y / cam.z, (focal.y * cam.y) / (cam.z * cam.z), 
         0., 0., 0.
     );
 
-    mat3 W = transpose(mat3(view));
-    mat3 T = W * J;
-    mat3 cov = transpose(T) * Vrk * T;
-    
-    vec2 vCenter = vec2(pos2d) / pos2d.w;
+    mat3 T = transpose(mat3(view)) * J;
+    mat3 cov2d = transpose(T) * Vrk * T;
 
-    float diagonal1 = cov[0][0] + 0.3;
-    float offDiagonal = cov[0][1];
-    float diagonal2 = cov[1][1] + 0.3;
+    float mid = (cov2d[0][0] + cov2d[1][1]) / 2.0;
+    float radius = length(vec2((cov2d[0][0] - cov2d[1][1]) / 2.0, cov2d[0][1]));
+    float lambda1 = mid + radius, lambda2 = mid - radius;
 
-    float mid = 0.5 * (diagonal1 + diagonal2);
-    float radius = length(vec2((diagonal1 - diagonal2) / 2.0, offDiagonal));
-    float lambda1 = mid + radius;
-    float lambda2 = max(mid - radius, 0.1);
-    vec2 diagonalVector = normalize(vec2(offDiagonal, lambda1 - diagonal1));
-    vec2 v1 = min(sqrt(2.0 * lambda1), 1024.0) * diagonalVector;
-    vec2 v2 = min(sqrt(2.0 * lambda2), 1024.0) * vec2(diagonalVector.y, -diagonalVector.x);
+    if(lambda2 < 0.0) return;
+    vec2 diagonalVector = normalize(vec2(cov2d[0][1], lambda1 - cov2d[0][0]));
+    vec2 majorAxis = min(sqrt(2.0 * lambda1), 1024.0) * diagonalVector;
+    vec2 minorAxis = min(sqrt(2.0 * lambda2), 1024.0) * vec2(diagonalVector.y, -diagonalVector.x);
 
-    vColor = color;
+    vColor = vec4((cov.w) & 0xffu, (cov.w >> 8) & 0xffu, (cov.w >> 16) & 0xffu, (cov.w >> 24) & 0xffu) / 255.0;
     vPosition = position;
 
+    vec2 vCenter = vec2(pos2d) / pos2d.w;
     gl_Position = vec4(
         vCenter 
-        + position.x * v1 / viewport * 2.0 
-        + position.y * v2 / viewport * 2.0, 0.0, 1.0
-    );
+        + position.x * majorAxis / viewport 
+        + position.y * minorAxis / viewport, 0.0, 1.0);
+
 }
 `;
