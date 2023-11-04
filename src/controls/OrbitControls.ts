@@ -28,6 +28,7 @@ class OrbitControls {
 
         let dragging = false;
         let panning = false;
+        let lastDist = 0;
         let lastX = 0;
         let lastY = 0;
 
@@ -121,10 +122,11 @@ class OrbitControls {
                 const dx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - lastX;
                 const dy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - lastY;
                 const dist = dx * dx + dy * dy;
-                const lastDist = lastX * lastX + lastY * lastY;
-                
-                if (dist > lastDist) {
-                    desiredRadius += (dist - lastDist) * this.zoomSpeed * 0.02 * zoomNorm;
+                const threshold = 5;
+
+                if (lastDist > 0 && Math.abs(dist - lastDist) > threshold) {
+                    const d = Math.sqrt(dist) - Math.sqrt(lastDist);
+                    desiredRadius += d * this.zoomSpeed * 0.02 * zoomNorm;
                     desiredRadius = Math.min(Math.max(desiredRadius, this.minZoom), this.maxZoom);
                 } else {
                     const panX = -dx * this.panSpeed * 0.01 * zoomNorm;
@@ -138,6 +140,7 @@ class OrbitControls {
 
                 lastX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                 lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                lastDist = dist;
             } else {
                 const dx = e.touches[0].clientX - lastX;
                 const dy = e.touches[0].clientY - lastY;
