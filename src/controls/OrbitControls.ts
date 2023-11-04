@@ -35,40 +35,34 @@ class OrbitControls {
             return 0.1 + (0.9 * (desiredRadius - this.minZoom)) / (this.maxZoom - this.minZoom);
         };
 
-        const onPointerDown = (e: PointerEvent) => {
+        const onMouseDown = (e: MouseEvent) => {
             preventDefault(e);
 
             dragging = true;
-            if (e.pointerType === "touch") {
-                panning = e.pointerId === 2;
-            } else {
-                panning = e.button === 2;
-            }
+            panning = e.button === 2;
             lastX = e.clientX;
             lastY = e.clientY;
-            window.addEventListener("pointerup", onPointerUp);
-            window.addEventListener("pointercancel", onPointerUp);
+            window.addEventListener("mouseup", onMouseUp);
         };
 
-        const onPointerUp = (e: PointerEvent) => {
+        const onMouseUp = (e: MouseEvent) => {
             preventDefault(e);
 
             dragging = false;
             panning = false;
-            window.removeEventListener("pointerup", onPointerUp);
-            window.removeEventListener("pointercancel", onPointerUp);
+            window.removeEventListener("mouseup", onMouseUp);
         };
 
-        const onPointerMove = (e: PointerEvent) => {
+        const onMouseMove = (e: MouseEvent) => {
             preventDefault(e);
 
             if (!dragging) return;
 
             const dx = e.clientX - lastX;
             const dy = e.clientY - lastY;
-            const zoomNorm = computeZoomNorm();
 
             if (panning) {
+                const zoomNorm = computeZoomNorm();
                 const panX = -dx * this.panSpeed * 0.01 * zoomNorm;
                 const panY = -dy * this.panSpeed * 0.01 * zoomNorm;
                 const R = camera.rotation.buffer;
@@ -92,6 +86,65 @@ class OrbitControls {
             const zoomNorm = computeZoomNorm();
             desiredRadius += e.deltaY * this.zoomSpeed * 0.02 * zoomNorm;
             desiredRadius = Math.min(Math.max(desiredRadius, this.minZoom), this.maxZoom);
+        };
+
+        const onTouchStart = (e: TouchEvent) => {
+            preventDefault(e);
+
+            if (e.touches.length === 1) {
+                dragging = true;
+                panning = false;
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+            } else if (e.touches.length === 2) {
+                dragging = true;
+                panning = true;
+                lastX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            }
+        };
+
+        const onTouchEnd = (e: TouchEvent) => {
+            preventDefault(e);
+
+            dragging = false;
+            panning = false;
+        };
+
+        const onTouchMove = (e: TouchEvent) => {
+            preventDefault(e);
+
+            if (!dragging) return;
+
+            if (panning) {
+                const zoomNorm = computeZoomNorm();
+                const dx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - lastX;
+                const dy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - lastY;
+                const dist = dx * dx + dy * dy;
+                const lastDist = lastX * lastX + lastY * lastY;
+                if (dist > lastDist) {
+                    desiredRadius += (dist - lastDist) * this.zoomSpeed * 0.02 * zoomNorm;
+                    desiredRadius = Math.min(Math.max(desiredRadius, this.minZoom), this.maxZoom);
+                } else {
+                    const panX = -dx * this.panSpeed * 0.01 * zoomNorm;
+                    const panY = -dy * this.panSpeed * 0.01 * zoomNorm;
+                    const R = camera.rotation.buffer;
+                    const right = new Vector3(R[0], R[3], R[6]);
+                    const up = new Vector3(R[1], R[4], R[7]);
+                    desiredTarget.add(right.multiply(panX));
+                    desiredTarget.add(up.multiply(panY));
+                }
+            } else {
+                const dx = e.touches[0].clientX - lastX;
+                const dy = e.touches[0].clientY - lastY;
+
+                desiredAlpha -= dx * this.orbitSpeed * 0.005;
+                desiredBeta += dy * this.orbitSpeed * 0.005;
+                desiredBeta = Math.min(Math.max(desiredBeta, this.minBeta), this.maxBeta);
+
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+            }
         };
 
         const lerp = (a: number, b: number, t: number) => {
@@ -126,9 +179,13 @@ class OrbitControls {
             domElement.removeEventListener("dragleave", preventDefault);
             domElement.removeEventListener("contextmenu", preventDefault);
 
-            domElement.removeEventListener("pointerdown", onPointerDown);
-            domElement.removeEventListener("pointermove", onPointerMove);
+            domElement.removeEventListener("mousedown", onMouseDown);
+            domElement.removeEventListener("mousemove", onMouseMove);
             domElement.removeEventListener("wheel", onWheel);
+
+            domElement.removeEventListener("touchstart", onTouchStart);
+            domElement.removeEventListener("touchend", onTouchEnd);
+            domElement.removeEventListener("touchmove", onTouchMove);
         };
 
         domElement.addEventListener("dragenter", preventDefault);
@@ -136,9 +193,13 @@ class OrbitControls {
         domElement.addEventListener("dragleave", preventDefault);
         domElement.addEventListener("contextmenu", preventDefault);
 
-        domElement.addEventListener("pointerdown", onPointerDown);
-        domElement.addEventListener("pointermove", onPointerMove);
+        domElement.addEventListener("mousedown", onMouseDown);
+        domElement.addEventListener("mousemove", onMouseMove);
         domElement.addEventListener("wheel", onWheel);
+
+        domElement.addEventListener("touchstart", onTouchStart);
+        domElement.addEventListener("touchend", onTouchEnd);
+        domElement.addEventListener("touchmove", onTouchMove);
 
         this.update();
     }

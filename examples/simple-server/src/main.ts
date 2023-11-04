@@ -12,7 +12,7 @@ async function main() {
     await SPLAT.Loader.LoadAsync(url, scene, () => {});
 
     const handleResize = () => {
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     };
 
     const frame = () => {
