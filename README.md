@@ -6,20 +6,17 @@ gsplat.js is an easy-to-use, general-purpose, open-source 3D Gaussian Splatting 
 
 ### Installation
 
-#### Configure Development Environment
+**Prerequisites**: Ensure your development environment supports ES6 modules.
 
-> ⚠️ Skip this step if you already have a development environment capable of importing ES6 modules.
-
-1. Install [Node.js](https://nodejs.org/en/download/) and [NPM](https://www.npmjs.com/get-npm).
-2. Create a new [Vite](https://vitejs.dev/) project, or your preferred ES6 module bundler.
+1. **Set Up a Project:** (If not already set up)
+   Install [Node.js](https://nodejs.org/en/download/) and [NPM](https://www.npmjs.com/get-npm), then initialize a new project using a module bundler like [Vite](https://vitejs.dev/):
 
 ```
 npm create vite@latest
+# Select `vanilla` for the framework and `typescript` for the language.
 ```
 
-When asked, select `vanilla` as the framework and `typescript` as the language.
-
-3. Validate that your development environment is working by running the following commands:
+2. **Test Your Environment:**
 
 ```
 cd <your-project-name>
@@ -27,32 +24,47 @@ npm install
 npm run dev
 ```
 
-If everything is working, you should see a "Hello, Vite!" message at `http://localhost:5173` or the printed address in your terminal.
-
-#### Install with NPM
-
-1. Install gsplat.js using NPM.
+**3. Install gsplat.js:**
 
 ```
-npm install --save-dev gsplat
+npm install --save gsplat
 ```
 
 ### Usage
 
 #### Creating a Scene
 
-This code creates a scene, camera, and renderer, and loads splatting data from a URL.
+To use **gsplat.js** in your project, follows these steps to create a scene, add a camera, and set up the renderer:
 
-main.ts --
+(in `src/main.ts` if you followed the Vite setup)
+
+```
+import * as SPLAT from "gsplat";
+
+const scene = new SPLAT.Scene();
+const camera = new SPLAT.Camera();
+const renderer = new SPLAT.WebGLRenderer();
+const controls = new SPLAT.OrbitControls(camera, renderer.domElement);
+
+async function main() {
+    const url = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bicycle/bicycle-7k.splat";
+
+    await SPLAT.Loader.LoadAsync(url, scene, () => {});
+
+    const frame = () => {
+        controls.update();
+        renderer.render(scene, camera);
+
+        requestAnimationFrame(frame);
+    };
+
+    requestAnimationFrame(frame);
+}
+
+main();
 ```
 
-```
-
-### Examples
-
-### Contributing
-
-🚧 Under Construction
+This script sets up a basic scene with Gaussian Splatting data loaded from URL and starts a rendering loop.
 
 ### License
 
