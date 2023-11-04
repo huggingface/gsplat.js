@@ -3,8 +3,8 @@ import { Matrix3 } from "../math/Matrix3";
 import { Vector3 } from "../math/Vector3";
 
 class OrbitControls {
-    minBeta: number = (5 * Math.PI) / 180;
-    maxBeta: number = (85 * Math.PI) / 180;
+    minAngle: number = -90;
+    maxAngle: number = 90;
     minZoom: number = 0.1;
     maxZoom: number = 30;
     orbitSpeed: number = 1;
@@ -74,7 +74,10 @@ class OrbitControls {
             } else {
                 desiredAlpha -= dx * this.orbitSpeed * 0.005;
                 desiredBeta += dy * this.orbitSpeed * 0.005;
-                desiredBeta = Math.min(Math.max(desiredBeta, this.minBeta), this.maxBeta);
+                desiredBeta = Math.min(
+                    Math.max(desiredBeta, (this.minAngle * Math.PI) / 180),
+                    (this.maxAngle * Math.PI) / 180,
+                );
             }
 
             lastX = e.clientX;
@@ -149,7 +152,10 @@ class OrbitControls {
 
                 desiredAlpha -= dx * this.orbitSpeed * 0.005;
                 desiredBeta += dy * this.orbitSpeed * 0.005;
-                desiredBeta = Math.min(Math.max(desiredBeta, this.minBeta), this.maxBeta);
+                desiredBeta = Math.min(
+                    Math.max(desiredBeta, (this.minAngle * Math.PI) / 180),
+                    (this.maxAngle * Math.PI) / 180,
+                );
 
                 lastX = e.touches[0].clientX;
                 lastY = e.touches[0].clientY;
