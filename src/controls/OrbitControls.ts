@@ -97,11 +97,15 @@ class OrbitControls {
                 panning = false;
                 lastX = e.touches[0].clientX;
                 lastY = e.touches[0].clientY;
+                lastDist = 0;
             } else if (e.touches.length === 2) {
                 dragging = true;
                 panning = true;
                 lastX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                 lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                const distX = e.touches[0].clientX - e.touches[1].clientX;
+                const distY = e.touches[0].clientY - e.touches[1].clientY;
+                lastDist = Math.sqrt(distX * distX + distY * distY);
             }
         };
 
@@ -123,9 +127,8 @@ class OrbitControls {
                 const distY = e.touches[0].clientY - e.touches[1].clientY;
                 const dist = Math.sqrt(distX * distX + distY * distY);
                 const delta = lastDist - dist;
-                lastDist = dist;
 
-                if (Math.abs(delta) > 5) {
+                if (lastDist > 0 && Math.abs(delta) > 5) {
                     desiredRadius += delta * this.zoomSpeed * 0.02 * zoomNorm;
                     desiredRadius = Math.min(Math.max(desiredRadius, this.minZoom), this.maxZoom);
                 } else {
@@ -136,11 +139,13 @@ class OrbitControls {
                     const R = camera.rotation.buffer;
                     const right = new Vector3(R[0], R[3], R[6]);
                     const up = new Vector3(R[1], R[4], R[7]);
-                    desiredTarget.add(right.multiply(dx * this.panSpeed * 0.01 * zoomNorm));
-                    desiredTarget.add(up.multiply(dy * this.panSpeed * 0.01 * zoomNorm));
+                    desiredTarget.add(right.multiply(-dx * this.panSpeed * 0.02 * zoomNorm));
+                    desiredTarget.add(up.multiply(-dy * this.panSpeed * 0.02 * zoomNorm));
                     lastX = touchX;
                     lastY = touchY;
                 }
+
+                lastDist = dist;
             } else {
                 const dx = e.touches[0].clientX - lastX;
                 const dy = e.touches[0].clientY - lastY;
