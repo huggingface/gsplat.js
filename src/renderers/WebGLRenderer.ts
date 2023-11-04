@@ -8,11 +8,15 @@ import { frag } from "./webgl/shaders/frag.glsl";
 import { Matrix4 } from "../math/Matrix4";
 
 export class WebGLRenderer {
+    resize: () => void;
     setSize: (width: number, height: number) => void;
     render: (scene: Scene, camera: Camera) => void;
     dispose: () => void;
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(optionalCanvas: HTMLCanvasElement | null = null) {
+        const canvas: HTMLCanvasElement = optionalCanvas || document.createElement("canvas");
+        if (!optionalCanvas) document.body.appendChild(canvas);
+
         const gl = canvas.getContext("webgl2", { antialias: false }) as WebGL2RenderingContext;
 
         let activeScene: Scene;
@@ -58,13 +62,21 @@ export class WebGLRenderer {
             return new Matrix4(...camToWorld);
         };
 
+        this.resize = () => {
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            if (canvas.width !== width || canvas.height !== height) {
+                this.setSize(width, height);
+            }
+        };
+
         this.setSize = (width: number, height: number) => {
             canvas.width = width;
             canvas.height = height;
 
             if (!activeCamera) return;
 
-            gl.viewport(0, 0, canvas.width, canvas.height);
+            gl.viewport(0, 0, canvas!.width, canvas.height);
             activeCamera.updateProjectionMatrix(canvas.width, canvas.height);
 
             u_projection = gl.getUniformLocation(program, "projection") as WebGLUniformLocation;
@@ -217,5 +229,7 @@ export class WebGLRenderer {
 
             initialized = false;
         };
+
+        this.resize();
     }
 }
