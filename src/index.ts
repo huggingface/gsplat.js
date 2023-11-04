@@ -7,10 +7,3 @@ export { Quaternion } from "./math/Quaternion";
 export { Vector3 } from "./math/Vector3";
 export { Matrix4 } from "./math/Matrix4";
 export { Matrix3 } from "./math/Matrix3";
-
-import loadWasm from "./wasm/hello";
-
-export const hello = async () => {
-    const wasm = await loadWasm();
-    wasm._hello();
-};
