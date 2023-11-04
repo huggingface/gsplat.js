@@ -129,7 +129,7 @@ class OrbitControls {
                 const delta = lastDist - dist;
 
                 if (lastDist > 0 && Math.abs(delta) > 5) {
-                    desiredRadius += delta * this.zoomSpeed * 0.2 * zoomNorm;
+                    desiredRadius += delta * this.zoomSpeed * 2 * zoomNorm;
                     desiredRadius = Math.min(Math.max(desiredRadius, this.minZoom), this.maxZoom);
                 } else {
                     const touchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
