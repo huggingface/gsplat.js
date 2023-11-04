@@ -1,6 +1,7 @@
 import * as SPLAT from "gsplat";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+
 const renderer = new SPLAT.WebGLRenderer(canvas);
 const scene = new SPLAT.Scene();
 const camera = new SPLAT.Camera();

@@ -8,6 +8,8 @@ import { frag } from "./webgl/shaders/frag.glsl";
 import { Matrix4 } from "../math/Matrix4";
 
 export class WebGLRenderer {
+    domElement: HTMLCanvasElement;
+
     resize: () => void;
     setSize: (width: number, height: number) => void;
     render: (scene: Scene, camera: Camera) => void;
@@ -15,7 +17,16 @@ export class WebGLRenderer {
 
     constructor(optionalCanvas: HTMLCanvasElement | null = null) {
         const canvas: HTMLCanvasElement = optionalCanvas || document.createElement("canvas");
-        if (!optionalCanvas) document.body.appendChild(canvas);
+        if (!optionalCanvas) {
+            canvas.style.display = "block";
+            canvas.style.boxSizing = "border-box";
+            canvas.style.width = "100%";
+            canvas.style.height = "100%";
+            canvas.style.margin = "0";
+            canvas.style.padding = "0";
+            document.body.appendChild(canvas);
+        }
+        this.domElement = canvas;
 
         const gl = canvas.getContext("webgl2", { antialias: false }) as WebGL2RenderingContext;
 
