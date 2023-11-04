@@ -119,28 +119,28 @@ class OrbitControls {
 
             if (panning) {
                 const zoomNorm = computeZoomNorm();
-                const dx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - lastX;
-                const dy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - lastY;
-                const dist = dx * dx + dy * dy;
-                const threshold = 5;
+                const distX = e.touches[0].clientX - e.touches[1].clientX;
+                const distY = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.sqrt(distX * distX + distY * distY);
+                const delta = lastDist - dist;
+                lastDist = dist;
 
-                if (lastDist > 0 && Math.abs(dist - lastDist) > threshold) {
-                    const d = Math.sqrt(dist) - Math.sqrt(lastDist);
-                    desiredRadius += d * this.zoomSpeed * 0.02 * zoomNorm;
+                if (Math.abs(delta) > 5) {
+                    desiredRadius += delta * this.zoomSpeed * 0.02 * zoomNorm;
                     desiredRadius = Math.min(Math.max(desiredRadius, this.minZoom), this.maxZoom);
                 } else {
-                    const panX = -dx * this.panSpeed * 0.01 * zoomNorm;
-                    const panY = -dy * this.panSpeed * 0.01 * zoomNorm;
+                    const touchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                    const touchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                    const dx = touchX - lastX;
+                    const dy = touchY - lastY;
                     const R = camera.rotation.buffer;
                     const right = new Vector3(R[0], R[3], R[6]);
                     const up = new Vector3(R[1], R[4], R[7]);
-                    desiredTarget.add(right.multiply(panX));
-                    desiredTarget.add(up.multiply(panY));
+                    desiredTarget.add(right.multiply(dx * this.panSpeed * 0.01 * zoomNorm));
+                    desiredTarget.add(up.multiply(dy * this.panSpeed * 0.01 * zoomNorm));
+                    lastX = touchX;
+                    lastY = touchY;
                 }
-
-                lastX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-                lastDist = dist;
             } else {
                 const dx = e.touches[0].clientX - lastX;
                 const dy = e.touches[0].clientY - lastY;
