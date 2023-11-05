@@ -8,3 +8,5 @@ export { Quaternion } from "./math/Quaternion";
 export { Vector3 } from "./math/Vector3";
 export { Matrix4 } from "./math/Matrix4";
 export { Matrix3 } from "./math/Matrix3";
+export { ShaderPass } from "./renderers/webgl/passes/ShaderPass";
+export { FadeInPass } from "./renderers/webgl/passes/FadeInPass";
