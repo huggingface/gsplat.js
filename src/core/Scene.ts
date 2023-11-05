@@ -11,6 +11,8 @@ class Scene extends Object3D {
 
     tex: SplatTexture;
 
+    dirty: boolean;
+
     constructor() {
         super();
 
@@ -21,6 +23,8 @@ class Scene extends Object3D {
         this.u_buffer = new Uint8Array(0);
 
         this.tex = new SplatTexture(new Uint32Array(0), 0, 0);
+
+        this.dirty = true;
     }
 
     setData(data: Uint8Array): void {
@@ -33,6 +37,8 @@ class Scene extends Object3D {
         this.u_buffer = new Uint8Array(this.data.buffer);
 
         this.tex = SplatTexture.FromScene(this);
+
+        this.dirty = true;
     }
 }
 

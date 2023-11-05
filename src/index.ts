@@ -1,6 +1,7 @@
 export { Camera } from "./cameras/Camera";
 export { Scene } from "./core/Scene";
 export { Loader } from "./loaders/Loader";
+export { PLYLoader } from "./loaders/PLYLoader";
 export { WebGLRenderer } from "./renderers/WebGLRenderer";
 export { OrbitControls } from "./controls/OrbitControls";
 export { Quaternion } from "./math/Quaternion";

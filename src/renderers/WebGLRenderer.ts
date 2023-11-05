@@ -181,7 +181,7 @@ export class WebGLRenderer {
         };
 
         this.render = (scene: Scene, camera: Camera) => {
-            if (scene !== activeScene || camera !== activeCamera) {
+            if (scene.dirty || scene !== activeScene || camera !== activeCamera) {
                 if (initialized) {
                     this.dispose();
                 }
@@ -190,6 +190,8 @@ export class WebGLRenderer {
                 activeCamera = camera;
 
                 initWebGL();
+
+                scene.dirty = false;
             }
 
             activeCamera.update(canvas.width, canvas.height);
