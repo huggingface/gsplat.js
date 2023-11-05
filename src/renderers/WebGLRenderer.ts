@@ -169,28 +169,27 @@ export class WebGLRenderer {
             gl.vertexAttribIPointer(indexAttribute, 1, gl.INT, 0, 0);
             gl.vertexAttribDivisor(indexAttribute, 1);
 
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.texImage2D(
+                gl.TEXTURE_2D,
+                0,
+                gl.RGBA32UI,
+                activeScene.tex.width,
+                activeScene.tex.height,
+                0,
+                gl.RGBA_INTEGER,
+                gl.UNSIGNED_INT,
+                activeScene.tex.data,
+            );
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+
             worker.onmessage = (e) => {
-                if (e.data.texdata) {
-                    const { texdata, texwidth, texheight } = e.data;
-                    gl.bindTexture(gl.TEXTURE_2D, texture);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-                    gl.texImage2D(
-                        gl.TEXTURE_2D,
-                        0,
-                        gl.RGBA32UI,
-                        texwidth,
-                        texheight,
-                        0,
-                        gl.RGBA_INTEGER,
-                        gl.UNSIGNED_INT,
-                        texdata,
-                    );
-                    gl.activeTexture(gl.TEXTURE0);
-                    gl.bindTexture(gl.TEXTURE_2D, texture);
-                } else if (e.data.depthIndex) {
+                if (e.data.depthIndex) {
                     const { depthIndex } = e.data;
                     gl.bindBuffer(gl.ARRAY_BUFFER, indexBuffer);
                     gl.bufferData(gl.ARRAY_BUFFER, depthIndex, gl.STATIC_DRAW);
