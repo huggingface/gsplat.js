@@ -17,6 +17,13 @@
     "type": "git",
     "url": "git+https://github.com/dylanebert/splat.js.git"
   },
+  "keywords": [
+    "gsplat",
+    "gaussian splatting",
+    "javascript",
+    "3d",
+    "webgl"
+  ],
   "author": "dylanebert",
   "license": "MIT",
   "bugs": {
