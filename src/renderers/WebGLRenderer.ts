@@ -1,7 +1,7 @@
 import type { Camera } from "../cameras/Camera";
 import type { Scene } from "../core/Scene";
 
-import SortWorker from "web-worker:./webgl/utils/worker.ts";
+import SortWorker from "web-worker:./webgl/utils/Worker.ts";
 
 import { vertex } from "./webgl/shaders/vertex.glsl";
 import { frag } from "./webgl/shaders/frag.glsl";

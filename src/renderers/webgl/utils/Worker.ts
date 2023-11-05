@@ -1,6 +1,6 @@
 import { Scene } from "../../../core/Scene";
 import { Matrix4 } from "../../../math/Matrix4";
-import loadWasm from "../../../wasm/sort";
+import loadWasm from "../../../wasm/wasm";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let wasmModule: any;

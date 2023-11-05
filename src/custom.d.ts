@@ -1,6 +1,6 @@
 declare module "web-worker:*" {
-    const workerConstructor: {
+    const WorkerConstructor: {
         new (): Worker;
     };
-    export default workerConstructor;
+    export default WorkerConstructor;
 }

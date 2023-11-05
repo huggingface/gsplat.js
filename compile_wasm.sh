@@ -1,5 +1,5 @@
 #!/bin/bash
-emcc --bind wasm/sort.cpp -Oz -o src/wasm/sort.js \
+emcc --bind wasm/wasm.cpp -Oz -o src/wasm/wasm.js \
     -s EXPORT_ES6=1 \
     -s MODULARIZE=1 \
     -s EXPORT_NAME=loadWasm \
