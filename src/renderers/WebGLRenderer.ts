@@ -5,7 +5,6 @@ import SortWorker from "web-worker:./webgl/utils/Worker.ts";
 
 import { vertex } from "./webgl/shaders/vertex.glsl";
 import { frag } from "./webgl/shaders/frag.glsl";
-import { Matrix4 } from "../math/Matrix4";
 
 export class WebGLRenderer {
     domElement: HTMLCanvasElement;
@@ -57,23 +56,6 @@ export class WebGLRenderer {
 
         let initialized = false;
 
-        const getViewMatrix = (camera: Camera) => {
-            const R = camera.rotation.buffer;
-            const t = camera.position.flat();
-            const camToWorld = [
-                [R[0], R[1], R[2], 0],
-                [R[3], R[4], R[5], 0],
-                [R[6], R[7], R[8], 0],
-                [
-                    -t[0] * R[0] - t[1] * R[3] - t[2] * R[6],
-                    -t[0] * R[1] - t[1] * R[4] - t[2] * R[7],
-                    -t[0] * R[2] - t[1] * R[5] - t[2] * R[8],
-                    1,
-                ],
-            ].flat();
-            return new Matrix4(...camToWorld);
-        };
-
         this.resize = () => {
             const width = canvas.clientWidth;
             const height = canvas.clientHeight;
@@ -89,7 +71,7 @@ export class WebGLRenderer {
             if (!activeCamera) return;
 
             gl.viewport(0, 0, canvas!.width, canvas.height);
-            activeCamera.updateProjectionMatrix(canvas.width, canvas.height);
+            activeCamera.update(canvas.width, canvas.height);
 
             u_projection = gl.getUniformLocation(program, "projection") as WebGLUniformLocation;
             gl.uniformMatrix4fv(u_projection, false, activeCamera.projectionMatrix.buffer);
@@ -132,7 +114,7 @@ export class WebGLRenderer {
             gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.ONE, gl.ONE_MINUS_DST_ALPHA, gl.ONE);
             gl.blendEquationSeparate(gl.FUNC_ADD, gl.FUNC_ADD);
 
-            activeCamera.updateProjectionMatrix(canvas.width, canvas.height);
+            activeCamera.update(canvas.width, canvas.height);
 
             u_projection = gl.getUniformLocation(program, "projection") as WebGLUniformLocation;
             gl.uniformMatrix4fv(u_projection, false, activeCamera.projectionMatrix.buffer);
@@ -143,9 +125,8 @@ export class WebGLRenderer {
             u_focal = gl.getUniformLocation(program, "focal") as WebGLUniformLocation;
             gl.uniform2fv(u_focal, new Float32Array([activeCamera.fx, activeCamera.fy]));
 
-            const viewMatrix = getViewMatrix(activeCamera);
             u_view = gl.getUniformLocation(program, "view") as WebGLUniformLocation;
-            gl.uniformMatrix4fv(u_view, false, viewMatrix.buffer);
+            gl.uniformMatrix4fv(u_view, false, activeCamera.viewMatrix.buffer);
 
             const triangleVertices = new Float32Array([-2, -2, 2, -2, 2, 2, -2, 2]);
             vertexBuffer = gl.createBuffer() as WebGLBuffer;
@@ -211,13 +192,11 @@ export class WebGLRenderer {
                 initWebGL();
             }
 
-            activeCamera.updateProjectionMatrix(canvas.width, canvas.height);
-            const viewMatrix = getViewMatrix(activeCamera);
-            const viewProj = activeCamera.projectionMatrix.multiply(viewMatrix);
-            worker.postMessage({ viewProj: viewProj });
+            activeCamera.update(canvas.width, canvas.height);
+            worker.postMessage({ viewProj: activeCamera.viewProj });
 
             if (activeScene.vertexCount > 0) {
-                gl.uniformMatrix4fv(u_view, false, viewMatrix.buffer);
+                gl.uniformMatrix4fv(u_view, false, activeCamera.viewMatrix.buffer);
                 gl.clear(gl.COLOR_BUFFER_BIT);
                 gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, activeScene.vertexCount);
             } else {
