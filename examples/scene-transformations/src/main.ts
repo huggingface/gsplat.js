@@ -1,6 +1,8 @@
 import * as SPLAT from "gsplat";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+const progressDialog = document.getElementById("progress-dialog") as HTMLDialogElement;
+const progressIndicator = document.getElementById("progress-indicator") as HTMLProgressElement;
 
 const renderer = new SPLAT.WebGLRenderer(canvas);
 const scene = new SPLAT.Scene();
@@ -19,7 +21,8 @@ async function main() {
     // Load the scene
     const name = "bonsai";
     const url = `https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/${name}/${name}-7k-raw.splat`;
-    await SPLAT.Loader.LoadAsync(url, scene, () => {});
+    await SPLAT.Loader.LoadAsync(url, scene, (progress) => progressIndicator.value = progress * 100);
+    progressDialog.close();
 
     // Transform it
     const rotation = new SPLAT.Vector3(-0.5, 0, 0);
