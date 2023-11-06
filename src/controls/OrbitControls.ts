@@ -16,11 +16,8 @@ class OrbitControls {
     update: () => void;
     dispose: () => void;
 
-    constructor(camera: Camera, domElement: HTMLElement) {
+    constructor(camera: Camera, domElement: HTMLElement, alpha: number = 0.5, beta: number = 0.5, radius: number = 5) {
         let target = new Vector3();
-        let alpha = 0;
-        let beta = 0;
-        let radius = 5;
 
         const desiredTarget = target.clone();
         let desiredAlpha = alpha;
