@@ -1,5 +1,5 @@
 import { Object3D } from "../core/Object3D";
-import { Quaternion } from "../index";
+import { Quaternion } from "../math/Quaternion";
 import { Matrix3 } from "../math/Matrix3";
 import { Matrix4 } from "../math/Matrix4";
 import { Vector3 } from "../math/Vector3";

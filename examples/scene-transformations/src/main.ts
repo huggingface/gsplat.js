@@ -17,11 +17,11 @@ function saveToFile(data: Uint8Array, name: string) {
 
 async function main() {
     // Load the scene
-    const url = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bonsai/bonsai-7k-raw.splat";
+    const url = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bonsai/bonsai-7k.splat";
     await SPLAT.Loader.LoadAsync(url, scene, () => {});
 
     // Transform it
-    scene.rotate(SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(-0.7, 2.3, 0)));
+    scene.rotate(SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 6, 0, 0)));
     scene.translate(new SPLAT.Vector3(0, -2, 0));
 
     // Save it to file

@@ -1,3 +1,4 @@
+import { Matrix3 } from "../math/Matrix3";
 import { Quaternion } from "../math/Quaternion";
 import { Vector3 } from "../math/Vector3";
 import { SplatTexture } from "../renderers/webgl/utils/SplatTexture";
@@ -60,26 +61,31 @@ class Scene extends Object3D {
     }
 
     rotate(rotation: Quaternion) {
+        const R = Matrix3.RotationFromQuaternion(rotation).buffer;
+
         for (let i = 0; i < this.vertexCount; i++) {
             const x = this.f_buffer[8 * i + 0];
             const y = this.f_buffer[8 * i + 1];
             const z = this.f_buffer[8 * i + 2];
 
-            const qx = rotation.x;
-            const qy = rotation.y;
-            const qz = rotation.z;
-            const qw = rotation.w;
+            this.f_buffer[8 * i + 0] = R[0] * x + R[3] * y + R[6] * z;
+            this.f_buffer[8 * i + 1] = R[1] * x + R[4] * y + R[7] * z;
+            this.f_buffer[8 * i + 2] = R[2] * x + R[5] * y + R[8] * z;
 
-            // calculate quat * vector
-            const ix = qw * x + qy * z - qz * y;
-            const iy = qw * y + qz * x - qx * z;
-            const iz = qw * z + qx * y - qy * x;
-            const iw = -qx * x - qy * y - qz * z;
+            const rot = new Quaternion(
+                (this.u_buffer[32 * i + 28 + 0] - 128) / 128,
+                (this.u_buffer[32 * i + 28 + 1] - 128) / 128,
+                (this.u_buffer[32 * i + 28 + 2] - 128) / 128,
+                (this.u_buffer[32 * i + 28 + 3] - 128) / 128,
+            );
 
-            // calculate result * inverse quat
-            this.f_buffer[8 * i + 0] = ix * qw + iw * -qx + iy * -qz - iz * -qy;
-            this.f_buffer[8 * i + 1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
-            this.f_buffer[8 * i + 2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+            const q = rot.multiply(rotation);
+            this.u_buffer[32 * i + 28 + 0] = Math.round((q.x * 128 + 128) % 256);
+            this.u_buffer[32 * i + 28 + 1] = Math.round((q.y * 128 + 128) % 256);
+            this.u_buffer[32 * i + 28 + 2] = Math.round((q.z * 128 + 128) % 256);
+            this.u_buffer[32 * i + 28 + 3] = Math.round((q.w * 128 + 128) % 256);
+
+            // TODO: Update scales
         }
 
         this.dirty = true;

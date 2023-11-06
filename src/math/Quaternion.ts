@@ -23,6 +23,24 @@ class Quaternion {
         return this;
     }
 
+    multiply(q: Quaternion): Quaternion {
+        const w1 = this.w,
+            x1 = this.x,
+            y1 = this.y,
+            z1 = this.z;
+        const w2 = q.w,
+            x2 = q.x,
+            y2 = q.y,
+            z2 = q.z;
+
+        return new Quaternion(
+            w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
+            w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
+            w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,
+            w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
+        );
+    }
+
     flat(): number[] {
         return [this.x, this.y, this.z, this.w];
     }
