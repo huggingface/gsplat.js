@@ -21,56 +21,34 @@ class Vector3 {
     add(v: number): Vector3;
     add(v: Vector3 | number): Vector3 {
         if (typeof v === "number") {
-            this.x += v;
-            this.y += v;
-            this.z += v;
+            return new Vector3(this.x + v, this.y + v, this.z + v);
         } else {
-            this.x += v.x;
-            this.y += v.y;
-            this.z += v.z;
+            return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z);
         }
-
-        return this;
     }
 
     subtract(v: Vector3): Vector3;
     subtract(v: number): Vector3;
     subtract(v: Vector3 | number): Vector3 {
         if (typeof v === "number") {
-            this.x -= v;
-            this.y -= v;
-            this.z -= v;
+            return new Vector3(this.x - v, this.y - v, this.z - v);
         } else {
-            this.x -= v.x;
-            this.y -= v.y;
-            this.z -= v.z;
+            return new Vector3(this.x - v.x, this.y - v.y, this.z - v.z);
         }
-
-        return this;
     }
 
     multiply(v: Vector3): Vector3;
     multiply(v: number): Vector3;
     multiply(v: Vector3 | number): Vector3 {
         if (typeof v === "number") {
-            this.x *= v;
-            this.y *= v;
-            this.z *= v;
+            return new Vector3(this.x * v, this.y * v, this.z * v);
         } else {
-            this.x *= v.x;
-            this.y *= v.y;
-            this.z *= v.z;
+            return new Vector3(this.x * v.x, this.y * v.y, this.z * v.z);
         }
-
-        return this;
     }
 
     lerp(v: Vector3, t: number): Vector3 {
-        this.x += (v.x - this.x) * t;
-        this.y += (v.y - this.y) * t;
-        this.z += (v.z - this.z) * t;
-
-        return this;
+        return new Vector3(this.x + (v.x - this.x) * t, this.y + (v.y - this.y) * t, this.z + (v.z - this.z) * t);
     }
 
     length(): number {

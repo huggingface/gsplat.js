@@ -1,3 +1,6 @@
+import { Matrix3 } from "../math/Matrix3";
+import { Quaternion } from "../math/Quaternion";
+import { Vector3 } from "../math/Vector3";
 import { SplatTexture } from "../renderers/webgl/utils/SplatTexture";
 import { Object3D } from "./Object3D";
 
@@ -27,6 +30,10 @@ class Scene extends Object3D {
         this.dirty = true;
     }
 
+    updateTex() {
+        this.tex = SplatTexture.FromScene(this);
+    }
+
     setData(data: Uint8Array): void {
         this.data = data;
 
@@ -36,7 +43,50 @@ class Scene extends Object3D {
         this.f_buffer = new Float32Array(this.data.buffer);
         this.u_buffer = new Uint8Array(this.data.buffer);
 
-        this.tex = SplatTexture.FromScene(this);
+        this.dirty = true;
+    }
+
+    translate(translation: Vector3) {
+        for (let i = 0; i < this.vertexCount; i++) {
+            const x = this.f_buffer[8 * i + 0];
+            const y = this.f_buffer[8 * i + 1];
+            const z = this.f_buffer[8 * i + 2];
+
+            this.f_buffer[8 * i + 0] = x + translation.x;
+            this.f_buffer[8 * i + 1] = y + translation.y;
+            this.f_buffer[8 * i + 2] = z + translation.z;
+        }
+
+        this.dirty = true;
+    }
+
+    rotate(rotation: Quaternion) {
+        const R = Matrix3.RotationFromQuaternion(rotation).buffer;
+
+        for (let i = 0; i < this.vertexCount; i++) {
+            const x = this.f_buffer[8 * i + 0];
+            const y = this.f_buffer[8 * i + 1];
+            const z = this.f_buffer[8 * i + 2];
+
+            this.f_buffer[8 * i + 0] = R[0] * x + R[3] * y + R[6] * z;
+            this.f_buffer[8 * i + 1] = R[1] * x + R[4] * y + R[7] * z;
+            this.f_buffer[8 * i + 2] = R[2] * x + R[5] * y + R[8] * z;
+
+            const rot = new Quaternion(
+                (this.u_buffer[32 * i + 28 + 0] - 128) / 128,
+                (this.u_buffer[32 * i + 28 + 1] - 128) / 128,
+                (this.u_buffer[32 * i + 28 + 2] - 128) / 128,
+                (this.u_buffer[32 * i + 28 + 3] - 128) / 128,
+            );
+
+            const q = rot.multiply(rotation);
+            this.u_buffer[32 * i + 28 + 0] = Math.round((q.x * 128 + 128) % 256);
+            this.u_buffer[32 * i + 28 + 1] = Math.round((q.y * 128 + 128) % 256);
+            this.u_buffer[32 * i + 28 + 2] = Math.round((q.z * 128 + 128) % 256);
+            this.u_buffer[32 * i + 28 + 3] = Math.round((q.w * 128 + 128) % 256);
+
+            // TODO: Update scales
+        }
 
         this.dirty = true;
     }

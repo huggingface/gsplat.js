@@ -1,3 +1,7 @@
+/*
+    from https://github.com/antimatter15/splat/blob/main/main.js
+*/
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 export function processPlyBuffer(inputBuffer: ArrayBuffer, onProgress?: (progress: number) => void) {

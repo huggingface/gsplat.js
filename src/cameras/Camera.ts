@@ -1,4 +1,5 @@
 import { Object3D } from "../core/Object3D";
+import { Quaternion } from "../math/Quaternion";
 import { Matrix3 } from "../math/Matrix3";
 import { Matrix4 } from "../math/Matrix4";
 import { Vector3 } from "../math/Vector3";
@@ -17,17 +18,17 @@ class Camera extends Object3D {
     update: (width: number, height: number) => void;
 
     constructor(
-        position: Vector3 = new Vector3(0, 0, -5),
-        rotation: Matrix3 = new Matrix3(),
-        fx: number = 1132,
-        fy: number = 1132,
-        near: number = 0.1,
-        far: number = 100,
+        position = new Vector3(0, 0, -5),
+        rotation = new Quaternion(),
+        fx = 1132,
+        fy = 1132,
+        near = 0.1,
+        far = 100,
     ) {
         super();
 
         const getViewMatrix = (): Matrix4 => {
-            const R = this.rotation.buffer;
+            const R = Matrix3.RotationFromQuaternion(this.rotation).buffer;
             const t = this.position.flat();
             const camToWorld = [
                 [R[0], R[1], R[2], 0],

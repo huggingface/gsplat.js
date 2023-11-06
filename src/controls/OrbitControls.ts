@@ -1,5 +1,6 @@
 import type { Camera } from "../cameras/Camera";
 import { Matrix3 } from "../math/Matrix3";
+import { Quaternion } from "../math/Quaternion";
 import { Vector3 } from "../math/Vector3";
 
 class OrbitControls {
@@ -15,13 +16,10 @@ class OrbitControls {
     update: () => void;
     dispose: () => void;
 
-    constructor(camera: Camera, domElement: HTMLElement) {
+    constructor(camera: Camera, domElement: HTMLElement, alpha: number = 0.5, beta: number = 0.5, radius: number = 5) {
         let target = new Vector3();
-        let alpha = 0;
-        let beta = 0;
-        let radius = 5;
 
-        const desiredTarget = target.clone();
+        let desiredTarget = target.clone();
         let desiredAlpha = alpha;
         let desiredBeta = beta;
         let desiredRadius = radius;
@@ -66,11 +64,11 @@ class OrbitControls {
                 const zoomNorm = computeZoomNorm();
                 const panX = -dx * this.panSpeed * 0.01 * zoomNorm;
                 const panY = -dy * this.panSpeed * 0.01 * zoomNorm;
-                const R = camera.rotation.buffer;
+                const R = Matrix3.RotationFromQuaternion(camera.rotation).buffer;
                 const right = new Vector3(R[0], R[3], R[6]);
                 const up = new Vector3(R[1], R[4], R[7]);
-                desiredTarget.add(right.multiply(panX));
-                desiredTarget.add(up.multiply(panY));
+                desiredTarget = desiredTarget.add(right.multiply(panX));
+                desiredTarget = desiredTarget.add(up.multiply(panY));
             } else {
                 desiredAlpha -= dx * this.orbitSpeed * 0.005;
                 desiredBeta += dy * this.orbitSpeed * 0.005;
@@ -139,11 +137,11 @@ class OrbitControls {
                 const touchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                 const dx = touchX - lastX;
                 const dy = touchY - lastY;
-                const R = camera.rotation.buffer;
+                const R = Matrix3.RotationFromQuaternion(camera.rotation).buffer;
                 const right = new Vector3(R[0], R[3], R[6]);
                 const up = new Vector3(R[1], R[4], R[7]);
-                desiredTarget.add(right.multiply(-dx * this.panSpeed * 0.02 * zoomNorm));
-                desiredTarget.add(up.multiply(-dy * this.panSpeed * 0.02 * zoomNorm));
+                desiredTarget = desiredTarget.add(right.multiply(-dx * this.panSpeed * 0.02 * zoomNorm));
+                desiredTarget = desiredTarget.add(up.multiply(-dy * this.panSpeed * 0.02 * zoomNorm));
                 lastX = touchX;
                 lastY = touchY;
             } else {
@@ -177,10 +175,10 @@ class OrbitControls {
             const z = target.z - radius * Math.cos(alpha) * Math.cos(beta);
             camera.position.set(x, y, z);
 
-            const direction = target.clone().subtract(camera.position).normalize();
+            const direction = target.subtract(camera.position).normalize();
             const rx = Math.asin(-direction.y);
             const ry = Math.atan2(direction.x, direction.z);
-            camera.rotation = Matrix3.RotationFromEuler(new Vector3(rx, ry, 0));
+            camera.rotation = Quaternion.FromEuler(new Vector3(rx, ry, 0));
         };
 
         const preventDefault = (e: Event) => {

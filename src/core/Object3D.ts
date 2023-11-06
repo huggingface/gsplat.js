@@ -1,13 +1,13 @@
 import { Vector3 } from "../math/Vector3";
-import { Matrix3 } from "../math/Matrix3";
+import { Quaternion } from "../math/Quaternion";
 
 class Object3D {
     position: Vector3;
-    rotation: Matrix3;
+    rotation: Quaternion;
 
     constructor() {
         this.position = new Vector3();
-        this.rotation = new Matrix3();
+        this.rotation = new Quaternion();
     }
 }
 
