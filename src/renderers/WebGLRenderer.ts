@@ -202,6 +202,8 @@ export class WebGLRenderer {
                 activeScene = scene;
                 activeCamera = camera;
 
+                scene.updateTex();
+
                 initWebGL();
 
                 scene.dirty = false;

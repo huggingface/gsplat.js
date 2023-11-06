@@ -1,3 +1,4 @@
+import { Quaternion } from "./Quaternion";
 import type { Vector3 } from "./Vector3";
 
 class Matrix3 {
@@ -53,6 +54,21 @@ class Matrix3 {
             e[3], e[4], e[5],
             e[6], e[7], e[8]
         );
+    }
+
+    static RotationFromQuaternion(q: Quaternion): Matrix3 {
+        const matrix = new Matrix3(
+            1 - 2 * q.y * q.y - 2 * q.z * q.z,
+            2 * q.x * q.y - 2 * q.z * q.w,
+            2 * q.x * q.z + 2 * q.y * q.w,
+            2 * q.x * q.y + 2 * q.z * q.w,
+            1 - 2 * q.x * q.x - 2 * q.z * q.z,
+            2 * q.y * q.z - 2 * q.x * q.w,
+            2 * q.x * q.z - 2 * q.y * q.w,
+            2 * q.y * q.z + 2 * q.x * q.w,
+            1 - 2 * q.x * q.x - 2 * q.y * q.y,
+        );
+        return matrix;
     }
 
     static RotationFromEuler(m: Vector3): Matrix3 {
