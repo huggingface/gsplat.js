@@ -1,6 +1,8 @@
 import * as SPLAT from "gsplat";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+const progressDialog = document.getElementById("progress-dialog") as HTMLDialogElement;
+const progressIndicator = document.getElementById("progress-indicator") as HTMLProgressElement;
 
 const renderer = new SPLAT.WebGLRenderer(canvas);
 const scene = new SPLAT.Scene();
@@ -18,7 +20,8 @@ function saveToFile(data: Uint8Array, name: string) {
 async function main() {
     // Load the scene
     const url = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bonsai/bonsai-7k.splat";
-    await SPLAT.Loader.LoadAsync(url, scene, () => {});
+    await SPLAT.Loader.LoadAsync(url, scene, (progress) => progressIndicator.value = progress * 100);
+    progressDialog.close();
 
     // Transform it
     scene.rotate(SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 6, 0, 0)));

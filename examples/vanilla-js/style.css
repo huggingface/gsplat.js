@@ -4,9 +4,17 @@ html {
     padding: 0;
     overflow: hidden;
     background-color: #000;
+    font-family: sans-serif;
 }
 
 canvas {
     width: 100vw;
     height: 100vh;
+}
+
+dialog {
+    width: 100%;
+    text-align: center;
+    max-width: 20em;
+    padding: 1em 0;
 }
