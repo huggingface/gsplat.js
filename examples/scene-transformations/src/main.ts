@@ -17,7 +17,7 @@ function saveToFile(data: Uint8Array, name: string) {
 
 async function main() {
     // Load the scene
-    const url = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bonsai/bonsai-7k.splat";
+    const url = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bonsai/bonsai-7k-raw.splat";
     await SPLAT.Loader.LoadAsync(url, scene, () => {});
 
     // Transform it
@@ -25,7 +25,7 @@ async function main() {
     scene.translate(new SPLAT.Vector3(0, -2, 0));
 
     // Save it to file
-    saveToFile(scene.data, "bonsai-7k-transformed.splat");
+    saveToFile(scene.data, "bonsai-7k.splat");
 
     const handleResize = () => {
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);
