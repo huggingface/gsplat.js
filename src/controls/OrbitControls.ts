@@ -189,8 +189,10 @@ class OrbitControls {
             const ry = Math.atan2(direction.x, direction.z);
             camera.rotation = Quaternion.FromEuler(new Vector3(rx, ry, 0));
 
-            // Add WASD controls
-            const moveSpeed = 0.1; // Adjust as needed
+            // Just spit balling here on the values
+            const moveSpeed = 0.1;
+            const rotateSpeed = 0.01;
+
             const R = Matrix3.RotationFromQuaternion(camera.rotation).buffer;
             const forward = new Vector3(-R[2], -R[5], -R[8]);
             const right = new Vector3(R[0], R[3], R[6]);
@@ -199,6 +201,15 @@ class OrbitControls {
             if (this.keys["w"]) desiredTarget = desiredTarget.subtract(forward.multiply(moveSpeed));
             if (this.keys["a"]) desiredTarget = desiredTarget.subtract(right.multiply(moveSpeed));
             if (this.keys["d"]) desiredTarget = desiredTarget.add(right.multiply(moveSpeed));
+
+            // Add rotation with 'e' and 'q' for horizontal rotation
+            if (this.keys["e"]) desiredAlpha += rotateSpeed;
+            if (this.keys["q"]) desiredAlpha -= rotateSpeed;
+
+            // Add rotation with 'r' and 'f' for vertical rotation
+            if (this.keys["r"]) desiredBeta += rotateSpeed;
+            if (this.keys["f"]) desiredBeta -= rotateSpeed;
+
         };
 
         const preventDefault = (e: Event) => {
