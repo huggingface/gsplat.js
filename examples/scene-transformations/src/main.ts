@@ -17,15 +17,43 @@ function saveToFile(data: Uint8Array, name: string) {
 
 async function main() {
     // Load the scene
-    const url = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bonsai/bonsai-7k.splat";
+    const name = "bonsai";
+    const url = `https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/${name}/${name}-7k-raw.splat`;
     await SPLAT.Loader.LoadAsync(url, scene, () => {});
 
     // Transform it
-    scene.rotate(SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 6, 0, 0)));
-    scene.translate(new SPLAT.Vector3(0, -2, 0));
+    const rotation = new SPLAT.Vector3(-0.5, 0, 0);
+    const translation = new SPLAT.Vector3(0, -1.5, 0);
+    scene.rotate(SPLAT.Quaternion.FromEuler(rotation));
+    scene.translate(translation);
 
     // Save it to file
-    saveToFile(scene.data, "bonsai-7k.splat");
+    saveToFile(scene.data, `${name}-7k.splat`);
+
+    // Append white disc to help with orientation
+    const buffer = new ArrayBuffer(32);
+    const position = new Float32Array(buffer, 0, 3);
+    const scales = new Float32Array(buffer, 12, 3);
+    const rgba = new Uint8ClampedArray(buffer, 24, 4);
+    const rot = new Uint8ClampedArray(buffer, 28, 4);
+    position[0] = 0;
+    position[1] = 0;
+    position[2] = 0;
+    scales[0] = 1;
+    scales[1] = 0.01;
+    scales[2] = 1;
+    rgba[0] = 255;
+    rgba[1] = 255;
+    rgba[2] = 255;
+    rgba[3] = 255;
+    rot[0] = 255;
+    rot[1] = 128;
+    rot[2] = 128;
+    rot[3] = 128;
+    const newData = new Uint8Array(scene.data.length + buffer.byteLength);
+    newData.set(scene.data);
+    newData.set(new Uint8Array(buffer), scene.data.length);
+    scene.setData(newData);
 
     const handleResize = () => {
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);

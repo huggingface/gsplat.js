@@ -38,7 +38,7 @@ class Scene extends Object3D {
         this.data = data;
 
         const rowLength = 3 * 4 + 3 * 4 + 4 + 4;
-        this.vertexCount = data.length / rowLength;
+        this.vertexCount = this.data.length / rowLength;
 
         this.f_buffer = new Float32Array(this.data.buffer);
         this.u_buffer = new Uint8Array(this.data.buffer);
@@ -68,24 +68,22 @@ class Scene extends Object3D {
             const y = this.f_buffer[8 * i + 1];
             const z = this.f_buffer[8 * i + 2];
 
-            this.f_buffer[8 * i + 0] = R[0] * x + R[3] * y + R[6] * z;
-            this.f_buffer[8 * i + 1] = R[1] * x + R[4] * y + R[7] * z;
-            this.f_buffer[8 * i + 2] = R[2] * x + R[5] * y + R[8] * z;
+            this.f_buffer[8 * i + 0] = R[0] * x + R[1] * y + R[2] * z;
+            this.f_buffer[8 * i + 1] = R[3] * x + R[4] * y + R[5] * z;
+            this.f_buffer[8 * i + 2] = R[6] * x + R[7] * y + R[8] * z;
 
-            const rot = new Quaternion(
-                (this.u_buffer[32 * i + 28 + 0] - 128) / 128,
+            const currentRotation = new Quaternion(
                 (this.u_buffer[32 * i + 28 + 1] - 128) / 128,
                 (this.u_buffer[32 * i + 28 + 2] - 128) / 128,
                 (this.u_buffer[32 * i + 28 + 3] - 128) / 128,
+                (this.u_buffer[32 * i + 28 + 0] - 128) / 128,
             );
 
-            const q = rot.multiply(rotation);
-            this.u_buffer[32 * i + 28 + 0] = Math.round((q.x * 128 + 128) % 256);
-            this.u_buffer[32 * i + 28 + 1] = Math.round((q.y * 128 + 128) % 256);
-            this.u_buffer[32 * i + 28 + 2] = Math.round((q.z * 128 + 128) % 256);
-            this.u_buffer[32 * i + 28 + 3] = Math.round((q.w * 128 + 128) % 256);
-
-            // TODO: Update scales
+            const newRot = rotation.multiply(currentRotation);
+            this.u_buffer[32 * i + 28 + 1] = Math.round((newRot.x * 128 + 128) % 256);
+            this.u_buffer[32 * i + 28 + 2] = Math.round((newRot.y * 128 + 128) % 256);
+            this.u_buffer[32 * i + 28 + 3] = Math.round((newRot.z * 128 + 128) % 256);
+            this.u_buffer[32 * i + 28 + 0] = Math.round((newRot.w * 128 + 128) % 256);
         }
 
         this.dirty = true;
