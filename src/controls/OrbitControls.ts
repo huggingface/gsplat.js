@@ -12,6 +12,7 @@ class OrbitControls {
     panSpeed: number = 1;
     zoomSpeed: number = 1;
     dampening: number = 0.12;
+    keys: { [key: string]: boolean } = {};
 
     update: () => void;
     dispose: () => void;
@@ -29,6 +30,14 @@ class OrbitControls {
         let lastDist = 0;
         let lastX = 0;
         let lastY = 0;
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            this.keys[e.key] = true;
+        };
+
+        const onKeyUp = (e: KeyboardEvent) => {
+            this.keys[e.key] = false;
+        };
 
         const computeZoomNorm = () => {
             return 0.1 + (0.9 * (desiredRadius - this.minZoom)) / (this.maxZoom - this.minZoom);
@@ -179,6 +188,17 @@ class OrbitControls {
             const rx = Math.asin(-direction.y);
             const ry = Math.atan2(direction.x, direction.z);
             camera.rotation = Quaternion.FromEuler(new Vector3(rx, ry, 0));
+
+            // Add WASD controls
+            const moveSpeed = 0.1; // Adjust as needed
+            const R = Matrix3.RotationFromQuaternion(camera.rotation).buffer;
+            const forward = new Vector3(-R[2], -R[5], -R[8]);
+            const right = new Vector3(R[0], R[3], R[6]);
+
+            if (this.keys["s"]) desiredTarget = desiredTarget.add(forward.multiply(moveSpeed));
+            if (this.keys["w"]) desiredTarget = desiredTarget.subtract(forward.multiply(moveSpeed));
+            if (this.keys["a"]) desiredTarget = desiredTarget.subtract(right.multiply(moveSpeed));
+            if (this.keys["d"]) desiredTarget = desiredTarget.add(right.multiply(moveSpeed));
         };
 
         const preventDefault = (e: Event) => {
@@ -199,7 +219,13 @@ class OrbitControls {
             domElement.removeEventListener("touchstart", onTouchStart);
             domElement.removeEventListener("touchend", onTouchEnd);
             domElement.removeEventListener("touchmove", onTouchMove);
+
+            window.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("keyup", onKeyUp);
         };
+
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("keyup", onKeyUp);
 
         domElement.addEventListener("dragenter", preventDefault);
         domElement.addEventListener("dragover", preventDefault);
