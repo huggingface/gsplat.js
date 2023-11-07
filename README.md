@@ -72,6 +72,16 @@ main();
 
 This script sets up a basic scene with Gaussian Splatting data loaded from URL and starts a rendering loop.
 
+### FAQ
+
+**Q: Can I use .ply files?**
+
+A: Yes, gsplat.js supports `.ply` files. See the [ply-converter example](https://github.com/dylanebert/gsplat.js/blob/main/examples/ply-converter/src/main.ts) for details on how to convert `.ply` to `.splat`.
+
+**Q: What are .splat files?**
+
+A: `.splat` files are a compact form of the splat data, offering quicker loading times than `.ply` files. They consist of a raw Uint8Array buffer.
+
 ### License
 
 This project is released under the MIT license. It is built upon several other open-source projects:
