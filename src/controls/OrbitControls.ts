@@ -13,7 +13,6 @@ class OrbitControls {
     zoomSpeed: number = 1;
     dampening: number = 0.12;
     keys: { [key: string]: boolean } = {};
-
     update: () => void;
     dispose: () => void;
 
@@ -189,10 +188,15 @@ class OrbitControls {
             const ry = Math.atan2(direction.x, direction.z);
             camera.rotation = Quaternion.FromEuler(new Vector3(rx, ry, 0));
 
+<<<<<<< HEAD
             // Just spit balling here on the values
             const moveSpeed = 0.1;
             const rotateSpeed = 0.01;
 
+=======
+            // Add WASD controls
+            const moveSpeed = 0.1; // Adjust as needed
+>>>>>>> 1ff6677 (added WSAD)
             const R = Matrix3.RotationFromQuaternion(camera.rotation).buffer;
             const forward = new Vector3(-R[2], -R[5], -R[8]);
             const right = new Vector3(R[0], R[3], R[6]);
@@ -201,6 +205,7 @@ class OrbitControls {
             if (this.keys["w"]) desiredTarget = desiredTarget.subtract(forward.multiply(moveSpeed));
             if (this.keys["a"]) desiredTarget = desiredTarget.subtract(right.multiply(moveSpeed));
             if (this.keys["d"]) desiredTarget = desiredTarget.add(right.multiply(moveSpeed));
+<<<<<<< HEAD
 
             // Add rotation with 'e' and 'q' for horizontal rotation
             if (this.keys["e"]) desiredAlpha += rotateSpeed;
@@ -210,6 +215,8 @@ class OrbitControls {
             if (this.keys["r"]) desiredBeta += rotateSpeed;
             if (this.keys["f"]) desiredBeta -= rotateSpeed;
 
+=======
+>>>>>>> 1ff6677 (added WSAD)
         };
 
         const preventDefault = (e: Event) => {
