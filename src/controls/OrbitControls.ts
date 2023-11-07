@@ -11,7 +11,7 @@ class OrbitControls {
     orbitSpeed: number = 1;
     panSpeed: number = 1;
     zoomSpeed: number = 1;
-    dampening: number = 0.08;
+    dampening: number = 0.12;
 
     update: () => void;
     dispose: () => void;
@@ -86,7 +86,7 @@ class OrbitControls {
             preventDefault(e);
 
             const zoomNorm = computeZoomNorm();
-            desiredRadius += e.deltaY * this.zoomSpeed * 0.02 * zoomNorm;
+            desiredRadius += e.deltaY * this.zoomSpeed * 0.025 * zoomNorm;
             desiredRadius = Math.min(Math.max(desiredRadius, this.minZoom), this.maxZoom);
         };
 
@@ -140,8 +140,8 @@ class OrbitControls {
                 const R = Matrix3.RotationFromQuaternion(camera.rotation).buffer;
                 const right = new Vector3(R[0], R[3], R[6]);
                 const up = new Vector3(R[1], R[4], R[7]);
-                desiredTarget = desiredTarget.add(right.multiply(-dx * this.panSpeed * 0.02 * zoomNorm));
-                desiredTarget = desiredTarget.add(up.multiply(-dy * this.panSpeed * 0.02 * zoomNorm));
+                desiredTarget = desiredTarget.add(right.multiply(-dx * this.panSpeed * 0.025 * zoomNorm));
+                desiredTarget = desiredTarget.add(up.multiply(-dy * this.panSpeed * 0.025 * zoomNorm));
                 lastX = touchX;
                 lastY = touchY;
             } else {
