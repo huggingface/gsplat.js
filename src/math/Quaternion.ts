@@ -12,6 +12,8 @@ class Quaternion {
         this.y = y;
         this.z = z;
         this.w = w;
+
+        this.normalize();
     }
 
     set(x: number, y: number, z: number, w: number): Quaternion {
@@ -19,6 +21,18 @@ class Quaternion {
         this.y = y;
         this.z = z;
         this.w = w;
+
+        this.normalize();
+
+        return this;
+    }
+
+    normalize(): Quaternion {
+        const l = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w);
+        this.x /= l;
+        this.y /= l;
+        this.z /= l;
+        this.w /= l;
 
         return this;
     }
