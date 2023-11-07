@@ -11,7 +11,7 @@ class OrbitControls {
     orbitSpeed: number = 1;
     panSpeed: number = 1;
     zoomSpeed: number = 1;
-    dampening: number = 0.1;
+    dampening: number = 0.08;
 
     update: () => void;
     dispose: () => void;
@@ -70,8 +70,8 @@ class OrbitControls {
                 desiredTarget = desiredTarget.add(right.multiply(panX));
                 desiredTarget = desiredTarget.add(up.multiply(panY));
             } else {
-                desiredAlpha -= dx * this.orbitSpeed * 0.005;
-                desiredBeta += dy * this.orbitSpeed * 0.005;
+                desiredAlpha -= dx * this.orbitSpeed * 0.003;
+                desiredBeta += dy * this.orbitSpeed * 0.003;
                 desiredBeta = Math.min(
                     Math.max(desiredBeta, (this.minAngle * Math.PI) / 180),
                     (this.maxAngle * Math.PI) / 180,
@@ -148,8 +148,8 @@ class OrbitControls {
                 const dx = e.touches[0].clientX - lastX;
                 const dy = e.touches[0].clientY - lastY;
 
-                desiredAlpha -= dx * this.orbitSpeed * 0.005;
-                desiredBeta += dy * this.orbitSpeed * 0.005;
+                desiredAlpha -= dx * this.orbitSpeed * 0.003;
+                desiredBeta += dy * this.orbitSpeed * 0.003;
                 desiredBeta = Math.min(
                     Math.max(desiredBeta, (this.minAngle * Math.PI) / 180),
                     (this.maxAngle * Math.PI) / 180,
