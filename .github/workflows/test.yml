@@ -1,0 +1,15 @@
+name: Run unit tests
+on: [ pull_request, push ]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mymindstorm/setup-emsdk@v11
+      - name: Verify Emscripten
+        run: emcc --version
+
+      - run: npm ci --legacy-peer-deps
+      - run: npm run test
+      - run: npm run build

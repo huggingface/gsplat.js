@@ -16,6 +16,7 @@ class Scene extends EventDispatcher {
     translate: (translation: Vector3) => void;
     rotate: (rotation: Quaternion) => void;
     scale: (scale: Vector3) => void;
+    limitBox: (xMin: number, xMax: number, yMin: number, yMax: number, zMin: number, zMax: number) => void;
     saveToFile: (name: string) => void;
 
     constructor() {
@@ -258,6 +259,39 @@ class Scene extends EventDispatcher {
                 this._data[8 * i + 5] = packHalf2x16(4 * sigma[2], 4 * sigma[3]);
                 this._data[8 * i + 6] = packHalf2x16(4 * sigma[4], 4 * sigma[5]);
             }
+
+            this.dispatchEvent(changeEvent);
+        };
+
+        this.limitBox = (xMin: number, xMax: number, yMin: number, yMax: number, zMin: number, zMax: number) => {
+            /* if (xMin >= xMax) {
+                throw new Error(`xMin (${xMin}) must be smaller than xMax (${xMax})`);
+            }
+            if (yMin >= yMax) {
+                throw new Error(`yMin (${yMin}) must be smaller than yMax (${yMax})`);
+            }
+            if (zMin >= zMax) {
+                throw new Error(`zMin (${zMin}) must be smaller than zMax (${zMax})`);
+            }
+
+            let newArrayIndex = 0;
+            for (let i = 0; i < this.vertexCount; i++) {
+                const x = this.clean_f_buffer[8 * i + 0];
+                const y = this.clean_f_buffer[8 * i + 1];
+                const z = this.clean_f_buffer[8 * i + 2];
+
+                if (x < xMin || x > xMax || y < yMin || y > yMax || z < zMin || z > zMax) {
+                    continue;
+                }
+
+                for (let j = 0; j < Scene.rowLength; j++) {
+                    this.u_buffer[32 * newArrayIndex + j] = this.clean_u_buffer[32 * i + j];
+                }
+
+                newArrayIndex += 1;
+            }
+            this.f_buffer.fill(0, 8 * newArrayIndex, this.clean_f_buffer.length);
+            this.u_buffer.fill(0, 32 * newArrayIndex, this.clean_u_buffer.length); */
 
             this.dispatchEvent(changeEvent);
         };
