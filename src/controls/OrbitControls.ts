@@ -12,11 +12,18 @@ class OrbitControls {
     panSpeed: number = 1;
     zoomSpeed: number = 1;
     dampening: number = 0.12;
-
+    keys: { [key: string]: boolean } = {};
     update: () => void;
     dispose: () => void;
 
-    constructor(camera: Camera, domElement: HTMLElement, alpha: number = 0.5, beta: number = 0.5, radius: number = 5) {
+    constructor(
+        camera: Camera,
+        domElement: HTMLElement,
+        alpha: number = 0.5,
+        beta: number = 0.5,
+        radius: number = 5,
+        enableKeyboardControls: boolean = true,
+    ) {
         let target = new Vector3();
 
         let desiredTarget = target.clone();
@@ -32,6 +39,23 @@ class OrbitControls {
 
         const computeZoomNorm = () => {
             return 0.1 + (0.9 * (desiredRadius - this.minZoom)) / (this.maxZoom - this.minZoom);
+        };
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            this.keys[e.code] = true;
+            // Map arrow keys to WASD keys
+            if (e.code === "ArrowUp") this.keys["KeyW"] = true;
+            if (e.code === "ArrowDown") this.keys["KeyS"] = true;
+            if (e.code === "ArrowLeft") this.keys["KeyA"] = true;
+            if (e.code === "ArrowRight") this.keys["KeyD"] = true;
+        };
+
+        const onKeyUp = (e: KeyboardEvent) => {
+            this.keys[e.code] = false; // Map arrow keys to WASD keys
+            if (e.code === "ArrowUp") this.keys["KeyW"] = false;
+            if (e.code === "ArrowDown") this.keys["KeyS"] = false;
+            if (e.code === "ArrowLeft") this.keys["KeyA"] = false;
+            if (e.code === "ArrowRight") this.keys["KeyD"] = false;
         };
 
         const onMouseDown = (e: MouseEvent) => {
@@ -179,6 +203,27 @@ class OrbitControls {
             const rx = Math.asin(-direction.y);
             const ry = Math.atan2(direction.x, direction.z);
             camera.rotation = Quaternion.FromEuler(new Vector3(rx, ry, 0));
+
+            // Just spit balling here on the values
+            const moveSpeed = 0.025;
+            const rotateSpeed = 0.01;
+
+            const R = Matrix3.RotationFromQuaternion(camera.rotation).buffer;
+            const forward = new Vector3(-R[2], -R[5], -R[8]);
+            const right = new Vector3(R[0], R[3], R[6]);
+
+            if (this.keys["KeyS"]) desiredTarget = desiredTarget.add(forward.multiply(moveSpeed));
+            if (this.keys["KeyW"]) desiredTarget = desiredTarget.subtract(forward.multiply(moveSpeed));
+            if (this.keys["KeyA"]) desiredTarget = desiredTarget.subtract(right.multiply(moveSpeed));
+            if (this.keys["KeyD"]) desiredTarget = desiredTarget.add(right.multiply(moveSpeed));
+
+            // Add rotation with 'e' and 'q' for horizontal rotation
+            if (this.keys["KeyE"]) desiredAlpha += rotateSpeed;
+            if (this.keys["KeyQ"]) desiredAlpha -= rotateSpeed;
+
+            // Add rotation with 'r' and 'f' for vertical rotation
+            if (this.keys["KeyR"]) desiredBeta += rotateSpeed;
+            if (this.keys["KeyF"]) desiredBeta -= rotateSpeed;
         };
 
         const preventDefault = (e: Event) => {
@@ -199,7 +244,17 @@ class OrbitControls {
             domElement.removeEventListener("touchstart", onTouchStart);
             domElement.removeEventListener("touchend", onTouchEnd);
             domElement.removeEventListener("touchmove", onTouchMove);
+
+            if (enableKeyboardControls) {
+                window.removeEventListener("keydown", onKeyDown);
+                window.removeEventListener("keyup", onKeyUp);
+            }
         };
+
+        if (enableKeyboardControls) {
+            window.addEventListener("keydown", onKeyDown);
+            window.addEventListener("keyup", onKeyUp);
+        }
 
         domElement.addEventListener("dragenter", preventDefault);
         domElement.addEventListener("dragover", preventDefault);
