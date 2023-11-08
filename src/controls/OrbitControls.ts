@@ -16,23 +16,6 @@ class OrbitControls {
     update: () => void;
     dispose: () => void;
 
-    private onKeyDown = (e: KeyboardEvent) => {
-        this.keys[e.key] = true;
-        // Map arrow keys to WASD keys
-        if (e.key === "ArrowUp") this.keys["w"] = true;
-        if (e.key === "ArrowDown") this.keys["s"] = true;
-        if (e.key === "ArrowLeft") this.keys["a"] = true;
-        if (e.key === "ArrowRight") this.keys["d"] = true;
-    };
-
-    private onKeyUp = (e: KeyboardEvent) => {
-        this.keys[e.key] = false; // Map arrow keys to WASD keys
-        if (e.key === "ArrowUp") this.keys["w"] = false;
-        if (e.key === "ArrowDown") this.keys["s"] = false;
-        if (e.key === "ArrowLeft") this.keys["a"] = false;
-        if (e.key === "ArrowRight") this.keys["d"] = false;
-    };
-
     constructor(
         camera: Camera,
         domElement: HTMLElement,
@@ -56,6 +39,23 @@ class OrbitControls {
 
         const computeZoomNorm = () => {
             return 0.1 + (0.9 * (desiredRadius - this.minZoom)) / (this.maxZoom - this.minZoom);
+        };
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            this.keys[e.code] = true;
+            // Map arrow keys to WASD keys
+            if (e.code === "ArrowUp") this.keys["KeyW"] = true;
+            if (e.code === "ArrowDown") this.keys["KeyS"] = true;
+            if (e.code === "ArrowLeft") this.keys["KeyA"] = true;
+            if (e.code === "ArrowRight") this.keys["KeyD"] = true;
+        };
+
+        const onKeyUp = (e: KeyboardEvent) => {
+            this.keys[e.code] = false; // Map arrow keys to WASD keys
+            if (e.code === "ArrowUp") this.keys["KeyW"] = false;
+            if (e.code === "ArrowDown") this.keys["KeyS"] = false;
+            if (e.code === "ArrowLeft") this.keys["KeyA"] = false;
+            if (e.code === "ArrowRight") this.keys["KeyD"] = false;
         };
 
         const onMouseDown = (e: MouseEvent) => {
@@ -212,18 +212,18 @@ class OrbitControls {
             const forward = new Vector3(-R[2], -R[5], -R[8]);
             const right = new Vector3(R[0], R[3], R[6]);
 
-            if (this.keys["s"]) desiredTarget = desiredTarget.add(forward.multiply(moveSpeed));
-            if (this.keys["w"]) desiredTarget = desiredTarget.subtract(forward.multiply(moveSpeed));
-            if (this.keys["a"]) desiredTarget = desiredTarget.subtract(right.multiply(moveSpeed));
-            if (this.keys["d"]) desiredTarget = desiredTarget.add(right.multiply(moveSpeed));
+            if (this.keys["KeyS"]) desiredTarget = desiredTarget.add(forward.multiply(moveSpeed));
+            if (this.keys["KeyW"]) desiredTarget = desiredTarget.subtract(forward.multiply(moveSpeed));
+            if (this.keys["KeyA"]) desiredTarget = desiredTarget.subtract(right.multiply(moveSpeed));
+            if (this.keys["KeyD"]) desiredTarget = desiredTarget.add(right.multiply(moveSpeed));
 
             // Add rotation with 'e' and 'q' for horizontal rotation
-            if (this.keys["e"]) desiredAlpha += rotateSpeed;
-            if (this.keys["q"]) desiredAlpha -= rotateSpeed;
+            if (this.keys["KeyE"]) desiredAlpha += rotateSpeed;
+            if (this.keys["KeyQ"]) desiredAlpha -= rotateSpeed;
 
             // Add rotation with 'r' and 'f' for vertical rotation
-            if (this.keys["r"]) desiredBeta += rotateSpeed;
-            if (this.keys["f"]) desiredBeta -= rotateSpeed;
+            if (this.keys["KeyR"]) desiredBeta += rotateSpeed;
+            if (this.keys["KeyF"]) desiredBeta -= rotateSpeed;
         };
 
         const preventDefault = (e: Event) => {
@@ -246,14 +246,14 @@ class OrbitControls {
             domElement.removeEventListener("touchmove", onTouchMove);
 
             if (enableKeyboardControls) {
-                window.removeEventListener("keydown", this.onKeyDown);
-                window.removeEventListener("keyup", this.onKeyUp);
+                window.removeEventListener("keydown", onKeyDown);
+                window.removeEventListener("keyup", onKeyUp);
             }
         };
 
         if (enableKeyboardControls) {
-            window.addEventListener("keydown", this.onKeyDown);
-            window.addEventListener("keyup", this.onKeyUp);
+            window.addEventListener("keydown", onKeyDown);
+            window.addEventListener("keyup", onKeyUp);
         }
 
         domElement.addEventListener("dragenter", preventDefault);
