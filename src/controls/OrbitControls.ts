@@ -16,7 +16,31 @@ class OrbitControls {
     update: () => void;
     dispose: () => void;
 
-    constructor(camera: Camera, domElement: HTMLElement, alpha: number = 0.5, beta: number = 0.5, radius: number = 5) {
+    private onKeyDown = (e: KeyboardEvent) => {
+        this.keys[e.key] = true;
+        // Map arrow keys to WASD keys
+        if (e.key === "ArrowUp") this.keys["w"] = true;
+        if (e.key === "ArrowDown") this.keys["s"] = true;
+        if (e.key === "ArrowLeft") this.keys["a"] = true;
+        if (e.key === "ArrowRight") this.keys["d"] = true;
+    };
+
+    private onKeyUp = (e: KeyboardEvent) => {
+        this.keys[e.key] = false; // Map arrow keys to WASD keys
+        if (e.key === "ArrowUp") this.keys["w"] = false;
+        if (e.key === "ArrowDown") this.keys["s"] = false;
+        if (e.key === "ArrowLeft") this.keys["a"] = false;
+        if (e.key === "ArrowRight") this.keys["d"] = false;
+    };
+
+    constructor(
+        camera: Camera,
+        domElement: HTMLElement,
+        alpha: number = 0.5,
+        beta: number = 0.5,
+        radius: number = 5,
+        enableKeyboardControls: boolean = true,
+    ) {
         let target = new Vector3();
 
         let desiredTarget = target.clone();
@@ -29,14 +53,6 @@ class OrbitControls {
         let lastDist = 0;
         let lastX = 0;
         let lastY = 0;
-
-        const onKeyDown = (e: KeyboardEvent) => {
-            this.keys[e.key] = true;
-        };
-
-        const onKeyUp = (e: KeyboardEvent) => {
-            this.keys[e.key] = false;
-        };
 
         const computeZoomNorm = () => {
             return 0.1 + (0.9 * (desiredRadius - this.minZoom)) / (this.maxZoom - this.minZoom);
@@ -188,15 +204,10 @@ class OrbitControls {
             const ry = Math.atan2(direction.x, direction.z);
             camera.rotation = Quaternion.FromEuler(new Vector3(rx, ry, 0));
 
-<<<<<<< HEAD
             // Just spit balling here on the values
-            const moveSpeed = 0.1;
+            const moveSpeed = 0.025;
             const rotateSpeed = 0.01;
 
-=======
-            // Add WASD controls
-            const moveSpeed = 0.1; // Adjust as needed
->>>>>>> 1ff6677 (added WSAD)
             const R = Matrix3.RotationFromQuaternion(camera.rotation).buffer;
             const forward = new Vector3(-R[2], -R[5], -R[8]);
             const right = new Vector3(R[0], R[3], R[6]);
@@ -205,7 +216,6 @@ class OrbitControls {
             if (this.keys["w"]) desiredTarget = desiredTarget.subtract(forward.multiply(moveSpeed));
             if (this.keys["a"]) desiredTarget = desiredTarget.subtract(right.multiply(moveSpeed));
             if (this.keys["d"]) desiredTarget = desiredTarget.add(right.multiply(moveSpeed));
-<<<<<<< HEAD
 
             // Add rotation with 'e' and 'q' for horizontal rotation
             if (this.keys["e"]) desiredAlpha += rotateSpeed;
@@ -214,9 +224,6 @@ class OrbitControls {
             // Add rotation with 'r' and 'f' for vertical rotation
             if (this.keys["r"]) desiredBeta += rotateSpeed;
             if (this.keys["f"]) desiredBeta -= rotateSpeed;
-
-=======
->>>>>>> 1ff6677 (added WSAD)
         };
 
         const preventDefault = (e: Event) => {
@@ -238,12 +245,16 @@ class OrbitControls {
             domElement.removeEventListener("touchend", onTouchEnd);
             domElement.removeEventListener("touchmove", onTouchMove);
 
-            window.removeEventListener("keydown", onKeyDown);
-            window.removeEventListener("keyup", onKeyUp);
+            if (enableKeyboardControls) {
+                window.removeEventListener("keydown", this.onKeyDown);
+                window.removeEventListener("keyup", this.onKeyUp);
+            }
         };
 
-        window.addEventListener("keydown", onKeyDown);
-        window.addEventListener("keyup", onKeyUp);
+        if (enableKeyboardControls) {
+            window.addEventListener("keydown", this.onKeyDown);
+            window.addEventListener("keyup", this.onKeyUp);
+        }
 
         domElement.addEventListener("dragenter", preventDefault);
         domElement.addEventListener("dragover", preventDefault);
