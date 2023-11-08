@@ -12,7 +12,6 @@ class OrbitControls {
     panSpeed: number = 1;
     zoomSpeed: number = 1;
     dampening: number = 0.12;
-    keys: { [key: string]: boolean } = {};
     update: () => void;
     dispose: () => void;
 
@@ -37,25 +36,27 @@ class OrbitControls {
         let lastX = 0;
         let lastY = 0;
 
+        const keys: { [key: string]: boolean } = {};
+
         const computeZoomNorm = () => {
             return 0.1 + (0.9 * (desiredRadius - this.minZoom)) / (this.maxZoom - this.minZoom);
         };
 
         const onKeyDown = (e: KeyboardEvent) => {
-            this.keys[e.code] = true;
+            keys[e.code] = true;
             // Map arrow keys to WASD keys
-            if (e.code === "ArrowUp") this.keys["KeyW"] = true;
-            if (e.code === "ArrowDown") this.keys["KeyS"] = true;
-            if (e.code === "ArrowLeft") this.keys["KeyA"] = true;
-            if (e.code === "ArrowRight") this.keys["KeyD"] = true;
+            if (e.code === "ArrowUp") keys["KeyW"] = true;
+            if (e.code === "ArrowDown") keys["KeyS"] = true;
+            if (e.code === "ArrowLeft") keys["KeyA"] = true;
+            if (e.code === "ArrowRight") keys["KeyD"] = true;
         };
 
         const onKeyUp = (e: KeyboardEvent) => {
-            this.keys[e.code] = false; // Map arrow keys to WASD keys
-            if (e.code === "ArrowUp") this.keys["KeyW"] = false;
-            if (e.code === "ArrowDown") this.keys["KeyS"] = false;
-            if (e.code === "ArrowLeft") this.keys["KeyA"] = false;
-            if (e.code === "ArrowRight") this.keys["KeyD"] = false;
+            keys[e.code] = false; // Map arrow keys to WASD keys
+            if (e.code === "ArrowUp") keys["KeyW"] = false;
+            if (e.code === "ArrowDown") keys["KeyS"] = false;
+            if (e.code === "ArrowLeft") keys["KeyA"] = false;
+            if (e.code === "ArrowRight") keys["KeyD"] = false;
         };
 
         const onMouseDown = (e: MouseEvent) => {
@@ -212,18 +213,18 @@ class OrbitControls {
             const forward = new Vector3(-R[2], -R[5], -R[8]);
             const right = new Vector3(R[0], R[3], R[6]);
 
-            if (this.keys["KeyS"]) desiredTarget = desiredTarget.add(forward.multiply(moveSpeed));
-            if (this.keys["KeyW"]) desiredTarget = desiredTarget.subtract(forward.multiply(moveSpeed));
-            if (this.keys["KeyA"]) desiredTarget = desiredTarget.subtract(right.multiply(moveSpeed));
-            if (this.keys["KeyD"]) desiredTarget = desiredTarget.add(right.multiply(moveSpeed));
+            if (keys["KeyS"]) desiredTarget = desiredTarget.add(forward.multiply(moveSpeed));
+            if (keys["KeyW"]) desiredTarget = desiredTarget.subtract(forward.multiply(moveSpeed));
+            if (keys["KeyA"]) desiredTarget = desiredTarget.subtract(right.multiply(moveSpeed));
+            if (keys["KeyD"]) desiredTarget = desiredTarget.add(right.multiply(moveSpeed));
 
             // Add rotation with 'e' and 'q' for horizontal rotation
-            if (this.keys["KeyE"]) desiredAlpha += rotateSpeed;
-            if (this.keys["KeyQ"]) desiredAlpha -= rotateSpeed;
+            if (keys["KeyE"]) desiredAlpha += rotateSpeed;
+            if (keys["KeyQ"]) desiredAlpha -= rotateSpeed;
 
             // Add rotation with 'r' and 'f' for vertical rotation
-            if (this.keys["KeyR"]) desiredBeta += rotateSpeed;
-            if (this.keys["KeyF"]) desiredBeta -= rotateSpeed;
+            if (keys["KeyR"]) desiredBeta += rotateSpeed;
+            if (keys["KeyF"]) desiredBeta -= rotateSpeed;
         };
 
         const preventDefault = (e: Event) => {
