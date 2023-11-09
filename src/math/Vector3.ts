@@ -17,6 +17,20 @@ class Vector3 {
         return this;
     }
 
+    equals(v: Vector3): boolean {
+        if (this.x !== v.x) {
+            return false;
+        }
+        if (this.y !== v.y) {
+            return false;
+        }
+        if (this.z !== v.z) {
+            return false;
+        }
+
+        return true;
+    }
+
     add(v: Vector3): Vector3;
     add(v: number): Vector3;
     add(v: Vector3 | number): Vector3 {
@@ -53,6 +67,10 @@ class Vector3 {
 
     length(): number {
         return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    }
+
+    distanceTo(v: Vector3): number {
+        return Math.sqrt((this.x - v.x) ** 2 + (this.y - v.y) ** 2 + (this.z - v.z) ** 2);
     }
 
     normalize(): Vector3 {

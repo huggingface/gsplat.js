@@ -27,6 +27,23 @@ class Quaternion {
         return this;
     }
 
+    equals(q: Quaternion): boolean {
+        if (this.x !== q.x) {
+            return false;
+        }
+        if (this.y !== q.y) {
+            return false;
+        }
+        if (this.z !== q.z) {
+            return false;
+        }
+        if (this.w !== q.w) {
+            return false;
+        }
+
+        return true;
+    }
+
     normalize(): Quaternion {
         const l = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w);
         this.x /= l;

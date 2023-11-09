@@ -12,18 +12,21 @@ class OrbitControls {
     panSpeed: number = 1;
     zoomSpeed: number = 1;
     dampening: number = 0.12;
+    attach: (newCamera: Camera) => void = () => {};
+    detach: () => void = () => {};
     update: () => void;
     dispose: () => void;
 
     constructor(
-        camera: Camera,
+        inputCamera: Camera,
         domElement: HTMLElement,
         alpha: number = 0.5,
         beta: number = 0.5,
         radius: number = 5,
         enableKeyboardControls: boolean = true,
+        inputTarget: Vector3 = new Vector3(),
     ) {
-        let target = new Vector3();
+        let target = inputTarget.clone();
 
         let desiredTarget = target.clone();
         let desiredAlpha = alpha;
@@ -37,6 +40,40 @@ class OrbitControls {
         let lastY = 0;
 
         const keys: { [key: string]: boolean } = {};
+
+        let camera: Camera | null = null;
+        let isUpdatingCamera = false;
+
+        const onCameraChange = () => {
+            if (!camera || isUpdatingCamera) return;
+
+            const eulerRotation = camera.rotation.toEuler();
+            desiredAlpha = -eulerRotation.y;
+            desiredBeta = -eulerRotation.x;
+
+            const x = camera.position.x - desiredRadius * Math.sin(desiredAlpha) * Math.cos(desiredBeta);
+            const y = camera.position.y + desiredRadius * Math.sin(desiredBeta);
+            const z = camera.position.z + desiredRadius * Math.cos(desiredAlpha) * Math.cos(desiredBeta);
+
+            desiredTarget = new Vector3(x, y, z);
+        };
+
+        this.attach = (newCamera: Camera) => {
+            if (camera) {
+                this.detach();
+            }
+            camera = newCamera;
+            camera.addEventListener("change", onCameraChange);
+        };
+
+        this.detach = () => {
+            if (!camera) return;
+
+            camera.removeEventListener("change", onCameraChange);
+            camera = null;
+        };
+
+        this.attach(inputCamera);
 
         const computeZoomNorm = () => {
             return 0.1 + (0.9 * (desiredRadius - this.minZoom)) / (this.maxZoom - this.minZoom);
@@ -80,7 +117,7 @@ class OrbitControls {
         const onMouseMove = (e: MouseEvent) => {
             preventDefault(e);
 
-            if (!dragging) return;
+            if (!dragging || !camera) return;
 
             const dx = e.clientX - lastX;
             const dy = e.clientY - lastY;
@@ -145,7 +182,7 @@ class OrbitControls {
         const onTouchMove = (e: TouchEvent) => {
             preventDefault(e);
 
-            if (!dragging) return;
+            if (!dragging || !camera) return;
 
             if (panning) {
                 const zoomNorm = computeZoomNorm();
@@ -190,6 +227,10 @@ class OrbitControls {
         };
 
         this.update = () => {
+            if (!camera) return;
+
+            isUpdatingCamera = true;
+
             alpha = lerp(alpha, desiredAlpha, this.dampening);
             beta = lerp(beta, desiredBeta, this.dampening);
             radius = lerp(radius, desiredRadius, this.dampening);
@@ -225,6 +266,8 @@ class OrbitControls {
             // Add rotation with 'r' and 'f' for vertical rotation
             if (keys["KeyR"]) desiredBeta += rotateSpeed;
             if (keys["KeyF"]) desiredBeta -= rotateSpeed;
+
+            isUpdatingCamera = false;
         };
 
         const preventDefault = (e: Event) => {

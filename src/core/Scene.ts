@@ -2,9 +2,8 @@ import { Matrix3 } from "../math/Matrix3";
 import { Quaternion } from "../math/Quaternion";
 import { Vector3 } from "../math/Vector3";
 import { SplatTexture } from "../renderers/webgl/utils/SplatTexture";
-import { Object3D } from "./Object3D";
 
-class Scene extends Object3D {
+class Scene {
     data: Uint8Array;
 
     vertexCount: number;
@@ -17,8 +16,6 @@ class Scene extends Object3D {
     dirty: boolean;
 
     constructor() {
-        super();
-
         this.data = new Uint8Array(0);
         this.vertexCount = 0;
 
