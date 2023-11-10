@@ -31,6 +31,21 @@ class Matrix4 {
         return this;
     }
 
+    equals(m: Matrix4): boolean {
+        if (this.buffer.length !== m.buffer.length) {
+            return false;
+        }
+        if (this.buffer === m.buffer) {
+            return true;
+        }
+        for (let i = 0; i < this.buffer.length; i++) {
+            if (this.buffer[i] !== m.buffer[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     multiply(m: Matrix4): Matrix4 {
         const a = this.buffer;
         const b = m.buffer;
