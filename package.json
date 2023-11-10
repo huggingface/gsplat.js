@@ -10,8 +10,8 @@
     "copy:wasm": "ncp ./src/wasm ./dist/wasm",
     "build": "npm run build:wasm && rollup -c && npm run copy:wasm",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint \"src/**/*.ts\"",
-    "format": "prettier --write \"src/**/*.ts\""
+    "lint": "eslint \"src/**/*.ts\" \"examples/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" \"examples/**/*.ts\""
   },
   "repository": {
     "type": "git",

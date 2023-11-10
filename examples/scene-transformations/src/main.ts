@@ -21,7 +21,7 @@ async function main() {
     // Load the scene
     const name = "bonsai";
     const url = `https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/${name}/${name}-7k-raw.splat`;
-    await SPLAT.Loader.LoadAsync(url, scene, (progress) => progressIndicator.value = progress * 100);
+    await SPLAT.Loader.LoadAsync(url, scene, (progress) => (progressIndicator.value = progress * 100));
     progressDialog.close();
 
     // Transform it
