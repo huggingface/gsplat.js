@@ -12,11 +12,9 @@ class OrbitControls {
     panSpeed: number = 1;
     zoomSpeed: number = 1;
     dampening: number = 0.12;
-    setCameraPosition: (position: Vector3, lookAt: Vector3) => void = () => { };
-
-    setCameraLookAt: (lookAt: Vector3) => void = () => { };
-    attach: (newCamera: Camera) => void = () => { };
-    detach: () => void = () => { };
+    setCameraTarget: (newTarget: Vector3) => void = () => {};
+    attach: (newCamera: Camera) => void = () => {};
+    detach: () => void = () => {};
     update: () => void;
     dispose: () => void;
 
@@ -77,6 +75,17 @@ class OrbitControls {
         };
 
         this.attach(inputCamera);
+
+        this.setCameraTarget = (newTarget: Vector3) => {
+            if (!camera) return;
+            const dx = newTarget.x - camera.position.x;
+            const dy = newTarget.y - camera.position.y;
+            const dz = newTarget.z - camera.position.z;
+            desiredAlpha = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            desiredBeta = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
+            desiredRadius = -Math.atan2(dx, dz);
+            desiredTarget.set(newTarget.x, newTarget.y, newTarget.z);
+        };
 
         const computeZoomNorm = () => {
             return 0.1 + (0.9 * (desiredRadius - this.minZoom)) / (this.maxZoom - this.minZoom);
@@ -228,38 +237,6 @@ class OrbitControls {
         const lerp = (a: number, b: number, t: number) => {
             return (1 - t) * a + t * b;
         };
-        this.setCameraPosition = (position: Vector3, lookAt: Vector3) => {
-            if (!lookAt) {
-                desiredTarget.x = position.x - radius * Math.sin(alpha) * Math.cos(beta);
-                desiredTarget.y = position.y + radius * Math.sin(beta);
-                desiredTarget.z = position.z + radius * Math.cos(alpha) * Math.cos(beta);
-            }
-            else {
-                let dx = lookAt.x - position.x;
-                let dy = lookAt.y - position.y;
-                let dz = lookAt.z - position.z;
-                const _radius = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                const _beta = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
-                const _alpha = -Math.atan2(dx, dz);
-                desiredAlpha = _alpha;
-                desiredBeta = _beta;
-                desiredRadius = _radius;
-                desiredTarget.set(lookAt.x, lookAt.y, lookAt.z);
-            }
-        }
-        this.setCameraLookAt = (lookAt: Vector3) => {
-            if (!camera) return;
-            let dx = lookAt.x - camera.position.x;
-            let dy = lookAt.y - camera.position.y;
-            let dz = lookAt.z - camera.position.z;
-            const _radius = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            const _beta = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
-            const _alpha = -Math.atan2(dx, dz);
-            desiredAlpha = _alpha;
-            desiredBeta = _beta;
-            desiredRadius = _radius;
-            desiredTarget.set(lookAt.x, lookAt.y, lookAt.z);
-        }
 
         this.update = () => {
             if (!camera) return;
