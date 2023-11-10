@@ -12,8 +12,10 @@ class OrbitControls {
     panSpeed: number = 1;
     zoomSpeed: number = 1;
     dampening: number = 0.12;
-    attach: (newCamera: Camera) => void = () => {};
-    detach: () => void = () => {};
+    setCameraPosition: (x: number, y: number, z: number) => void = () => { };
+    setCameraLookAt: (x: number, y: number, z: number) => void = () => { };
+    attach: (newCamera: Camera) => void = () => { };
+    detach: () => void = () => { };
     update: () => void;
     dispose: () => void;
 
@@ -225,7 +227,26 @@ class OrbitControls {
         const lerp = (a: number, b: number, t: number) => {
             return (1 - t) * a + t * b;
         };
-
+        this.setCameraLookAt = (newX: number, newY: number, newZ: number) => {
+            if (!camera) return;
+            let dx = newX - camera.position.x;
+            let dy = newY - camera.position.y;
+            let dz = newZ - camera.position.z;
+            const _radius = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            const _beta = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
+            const _alpha = -Math.atan2(dx, dz);
+            desiredAlpha = _alpha;
+            desiredBeta = _beta;
+            desiredRadius = _radius;
+            desiredTarget.set(newX, newY, newZ);
+            this.update();
+        }
+        this.setCameraPosition = (x: number, y: number, z: number) => {
+            desiredTarget.x = x - radius * Math.sin(alpha) * Math.cos(beta);
+            desiredTarget.y = y + radius * Math.sin(beta);
+            desiredTarget.z = z + radius * Math.cos(alpha) * Math.cos(beta);
+            this.update();
+        }
         this.update = () => {
             if (!camera) return;
 
