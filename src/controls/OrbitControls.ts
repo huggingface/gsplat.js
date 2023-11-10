@@ -227,18 +227,18 @@ class OrbitControls {
         const lerp = (a: number, b: number, t: number) => {
             return (1 - t) * a + t * b;
         };
-        this.setCameraLookAt = (newX: number, newY: number, newZ: number) => {
+        this.setCameraLookAt = (x: number, y: number, z: number) => {
             if (!camera) return;
-            let dx = newX - camera.position.x;
-            let dy = newY - camera.position.y;
-            let dz = newZ - camera.position.z;
+            let dx = x - camera.position.x;
+            let dy = y - camera.position.y;
+            let dz = z - camera.position.z;
             const _radius = Math.sqrt(dx * dx + dy * dy + dz * dz);
             const _beta = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
             const _alpha = -Math.atan2(dx, dz);
             desiredAlpha = _alpha;
             desiredBeta = _beta;
             desiredRadius = _radius;
-            desiredTarget.set(newX, newY, newZ);
+            desiredTarget.set(x, y, z);
             this.update();
         }
         this.setCameraPosition = (x: number, y: number, z: number) => {
