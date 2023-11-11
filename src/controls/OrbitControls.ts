@@ -81,9 +81,9 @@ class OrbitControls {
             const dx = newTarget.x - camera.position.x;
             const dy = newTarget.y - camera.position.y;
             const dz = newTarget.z - camera.position.z;
-            desiredAlpha = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            desiredRadius = Math.sqrt(dx * dx + dy * dy + dz * dz);
             desiredBeta = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
-            desiredRadius = -Math.atan2(dx, dz);
+            desiredAlpha = -Math.atan2(dx, dz);
             desiredTarget.set(newTarget.x, newTarget.y, newTarget.z);
         };
 
