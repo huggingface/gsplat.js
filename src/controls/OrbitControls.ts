@@ -84,7 +84,7 @@ class OrbitControls {
             desiredRadius = Math.sqrt(dx * dx + dy * dy + dz * dz);
             desiredBeta = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
             desiredAlpha = -Math.atan2(dx, dz);
-            desiredTarget.set(newTarget.x, newTarget.y, newTarget.z);
+            desiredTarget = new Vector3(newTarget.x, newTarget.y, newTarget.z);
         };
 
         const computeZoomNorm = () => {
@@ -251,7 +251,7 @@ class OrbitControls {
             const x = target.x + radius * Math.sin(alpha) * Math.cos(beta);
             const y = target.y - radius * Math.sin(beta);
             const z = target.z - radius * Math.cos(alpha) * Math.cos(beta);
-            camera.position.set(x, y, z);
+            camera.position = new Vector3(x, y, z);
 
             const direction = target.subtract(camera.position).normalize();
             const rx = Math.asin(-direction.y);

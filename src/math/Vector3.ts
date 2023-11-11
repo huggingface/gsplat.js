@@ -9,14 +9,6 @@ class Vector3 {
         this.z = z;
     }
 
-    set(x: number, y: number, z: number): Vector3 {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-
-        return this;
-    }
-
     equals(v: Vector3): boolean {
         if (this.x !== v.x) {
             return false;

@@ -56,12 +56,12 @@ class Camera extends Object3D {
 
         this.update = (width: number, height: number) => {
             // prettier-ignore
-            this.projectionMatrix.set(
+            this.projectionMatrix = new Matrix4(
                 2 * this.fx / width, 0, 0, 0,
                 0, -2 * this.fy / height, 0, 0,
                 0, 0, this.far / (this.far - this.near), 1,
                 0, 0, -(this.far * this.near) / (this.far - this.near), 0
-                );
+            );
             this.viewMatrix = getViewMatrix();
             this.viewProj = this.projectionMatrix.multiply(this.viewMatrix);
         };

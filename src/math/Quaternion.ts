@@ -12,19 +12,6 @@ class Quaternion {
         this.y = y;
         this.z = z;
         this.w = w;
-
-        this.normalize();
-    }
-
-    set(x: number, y: number, z: number, w: number): Quaternion {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.w = w;
-
-        this.normalize();
-
-        return this;
     }
 
     equals(q: Quaternion): boolean {
