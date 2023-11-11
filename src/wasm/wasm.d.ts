@@ -5,7 +5,6 @@ interface WasmModule {
         viewProj: number,
         vertexCount: number,
         fBuffer: number,
-        uBuffer: number,
         center: number,
         color: number,
         covA: number,
@@ -13,6 +12,7 @@ interface WasmModule {
         depthBuffer: number,
         depthIndex: number,
         starts: number,
+        counts: number,
     ): void;
 }
 

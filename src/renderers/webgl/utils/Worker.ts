@@ -15,29 +15,28 @@ let sortRunning = false;
 
 let viewProjPtr: number;
 let fBufferPtr: number;
-let uBufferPtr: number;
 let depthBufferPtr: number;
 let depthIndexPtr: number;
 let startsPtr: number;
+let countsPtr: number;
 
 const initScene = async () => {
     if (!wasmModule) await initWasm();
 
-    fBufferPtr = wasmModule._malloc(scene.f_buffer.length * scene.f_buffer.BYTES_PER_ELEMENT);
-    uBufferPtr = wasmModule._malloc(scene.u_buffer.length * scene.u_buffer.BYTES_PER_ELEMENT);
-    wasmModule.HEAPF32.set(scene.f_buffer, fBufferPtr / 4);
-    wasmModule.HEAPU8.set(scene.u_buffer, uBufferPtr);
+    fBufferPtr = wasmModule._malloc(scene.positions.length * scene.positions.BYTES_PER_ELEMENT);
+    wasmModule.HEAPF32.set(scene.positions, fBufferPtr / 4);
 
     viewProjPtr = wasmModule._malloc(16 * 4);
     depthBufferPtr = wasmModule._malloc(scene.vertexCount * 4);
     depthIndexPtr = wasmModule._malloc(scene.vertexCount * 4);
     startsPtr = wasmModule._malloc(scene.vertexCount * 4);
+    countsPtr = wasmModule._malloc(scene.vertexCount * 4);
 };
 
 const runSort = (viewProj: Matrix4) => {
     const viewProjBuffer = new Float32Array(viewProj.buffer);
     wasmModule.HEAPF32.set(viewProjBuffer, viewProjPtr / 4);
-    wasmModule._sort(viewProjPtr, scene.vertexCount, fBufferPtr, uBufferPtr, depthBufferPtr, depthIndexPtr, startsPtr);
+    wasmModule._sort(viewProjPtr, scene.vertexCount, fBufferPtr, depthBufferPtr, depthIndexPtr, startsPtr, countsPtr);
     const depthIndex = new Uint32Array(wasmModule.HEAPU32.buffer, depthIndexPtr, scene.vertexCount);
     const transferableDepthIndex = new Uint32Array(depthIndex.slice());
     self.postMessage({ depthIndex: transferableDepthIndex }, [transferableDepthIndex.buffer]);
