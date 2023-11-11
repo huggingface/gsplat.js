@@ -186,18 +186,22 @@ class Scene extends EventDispatcher {
                 );
 
                 const newRot = rotation.multiply(currentRotation);
+                if (i === 0) {
+                    console.log(rotation, currentRotation, newRot);
+                }
                 this._rotations[4 * i + 1] = newRot.x;
                 this._rotations[4 * i + 2] = newRot.y;
                 this._rotations[4 * i + 3] = newRot.z;
                 this._rotations[4 * i + 0] = newRot.w;
 
-                const scale = [this._scales[3 * i + 0], this._scales[3 * i + 1], this._scales[3 * i + 2]];
                 const rot = [
                     this._rotations[4 * i + 0],
                     this._rotations[4 * i + 1],
                     this._rotations[4 * i + 2],
                     this._rotations[4 * i + 3],
                 ];
+
+                const scale = [this._scales[3 * i + 0], this._scales[3 * i + 1], this._scales[3 * i + 2]];
 
                 const M = [
                     1.0 - 2.0 * (rot[2] * rot[2] + rot[3] * rot[3]),
@@ -224,6 +228,7 @@ class Scene extends EventDispatcher {
 
                 this._data[8 * i + 4] = packHalf2x16(4 * sigma[0], 4 * sigma[1]);
                 this._data[8 * i + 5] = packHalf2x16(4 * sigma[2], 4 * sigma[3]);
+                this._data[8 * i + 6] = packHalf2x16(4 * sigma[4], 4 * sigma[5]);
             }
 
             this.dispatchEvent(changeEvent);
