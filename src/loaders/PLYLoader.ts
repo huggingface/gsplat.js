@@ -1,6 +1,8 @@
-import type { Scene } from "../core/Scene";
+import { Scene } from "../core/Scene";
 
 class PLYLoader {
+    static SH_C0 = 0.28209479177387814;
+
     static async LoadAsync(url: string, scene: Scene, onProgress?: (progress: number) => void): Promise<void> {
         const req = await fetch(url, {
             mode: "cors",
@@ -92,16 +94,13 @@ class PLYLoader {
         }
 
         const dataView = new DataView(inputBuffer, header_end_index + header_end.length);
-
-        const rowLength = 3 * 4 + 3 * 4 + 4 + 4;
-        const SH_C0 = 0.28209479177387814;
-        const buffer = new ArrayBuffer(rowLength * vertexCount);
+        const buffer = new ArrayBuffer(Scene.RowLength * vertexCount);
 
         for (let i = 0; i < vertexCount; i++) {
-            const position = new Float32Array(buffer, i * rowLength, 3);
-            const scale = new Float32Array(buffer, i * rowLength + 12, 3);
-            const rgba = new Uint8ClampedArray(buffer, i * rowLength + 24, 4);
-            const rot = new Uint8ClampedArray(buffer, i * rowLength + 28, 4);
+            const position = new Float32Array(buffer, i * Scene.RowLength, 3);
+            const scale = new Float32Array(buffer, i * Scene.RowLength + 12, 3);
+            const rgba = new Uint8ClampedArray(buffer, i * Scene.RowLength + 24, 4);
+            const rot = new Uint8ClampedArray(buffer, i * Scene.RowLength + 28, 4);
 
             let r0: number = 255;
             let r1: number = 0;
@@ -150,16 +149,16 @@ class PLYLoader {
                         rgba[2] = value;
                         break;
                     case "f_dc_0":
-                        rgba[0] = (0.5 + SH_C0 * value) * 255;
+                        rgba[0] = (0.5 + this.SH_C0 * value) * 255;
                         break;
                     case "f_dc_1":
-                        rgba[1] = (0.5 + SH_C0 * value) * 255;
+                        rgba[1] = (0.5 + this.SH_C0 * value) * 255;
                         break;
                     case "f_dc_2":
-                        rgba[2] = (0.5 + SH_C0 * value) * 255;
+                        rgba[2] = (0.5 + this.SH_C0 * value) * 255;
                         break;
                     case "f_dc_3":
-                        rgba[3] = (0.5 + SH_C0 * value) * 255;
+                        rgba[3] = (0.5 + this.SH_C0 * value) * 255;
                         break;
                     case "opacity":
                         rgba[3] = (1 / (1 + Math.exp(-value))) * 255;

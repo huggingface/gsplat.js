@@ -4,6 +4,8 @@ import { Vector3 } from "../math/Vector3";
 import { EventDispatcher } from "./EventDispatcher";
 
 class Scene extends EventDispatcher {
+    static RowLength = 3 * 4 + 3 * 4 + 4 + 4;
+
     private _data: Uint32Array;
     private _width: number;
     private _height: number;
@@ -16,6 +18,7 @@ class Scene extends EventDispatcher {
     translate: (translation: Vector3) => void;
     rotate: (rotation: Quaternion) => void;
     scale: (scale: Vector3) => void;
+    limitBox: (xMin: number, xMax: number, yMin: number, yMax: number, zMin: number, zMax: number) => void;
     saveToFile: (name: string) => void;
 
     constructor() {
@@ -58,7 +61,6 @@ class Scene extends EventDispatcher {
         };
 
         const changeEvent = { type: "change" } as Event;
-        const rowLength = 3 * 4 + 3 * 4 + 4 + 4;
 
         this._data = new Uint32Array(0);
         this._vertexCount = 0;
@@ -88,7 +90,7 @@ class Scene extends EventDispatcher {
         };
 
         this.setData = (data: Uint8Array) => {
-            this._vertexCount = data.length / rowLength;
+            this._vertexCount = data.length / Scene.RowLength;
             this._height = Math.ceil((2 * this._vertexCount) / this._width);
             this._data = new Uint32Array(this._width * this._height * 4);
             this._positions = new Float32Array(3 * this._vertexCount);
@@ -258,6 +260,67 @@ class Scene extends EventDispatcher {
                 this._data[8 * i + 5] = packHalf2x16(4 * sigma[2], 4 * sigma[3]);
                 this._data[8 * i + 6] = packHalf2x16(4 * sigma[4], 4 * sigma[5]);
             }
+
+            this.dispatchEvent(changeEvent);
+        };
+
+        this.limitBox = (xMin: number, xMax: number, yMin: number, yMax: number, zMin: number, zMax: number) => {
+            if (xMin >= xMax) {
+                throw new Error(`xMin (${xMin}) must be smaller than xMax (${xMax})`);
+            }
+            if (yMin >= yMax) {
+                throw new Error(`yMin (${yMin}) must be smaller than yMax (${yMax})`);
+            }
+            if (zMin >= zMax) {
+                throw new Error(`zMin (${zMin}) must be smaller than zMax (${zMax})`);
+            }
+
+            const mask = new Uint8Array(this._vertexCount);
+            for (let i = 0; i < this._vertexCount; i++) {
+                const x = this._positions[3 * i + 0];
+                const y = this._positions[3 * i + 1];
+                const z = this._positions[3 * i + 2];
+
+                if (x >= xMin && x <= xMax && y >= yMin && y <= yMax && z >= zMin && z <= zMax) {
+                    mask[i] = 1;
+                }
+            }
+
+            let newIndex = 0;
+            for (let i = 0; i < this._vertexCount; i++) {
+                if (mask[i] === 0) continue;
+
+                this._data[8 * newIndex + 0] = this._data[8 * i + 0];
+                this._data[8 * newIndex + 1] = this._data[8 * i + 1];
+                this._data[8 * newIndex + 2] = this._data[8 * i + 2];
+                this._data[8 * newIndex + 3] = this._data[8 * i + 3];
+                this._data[8 * newIndex + 4] = this._data[8 * i + 4];
+                this._data[8 * newIndex + 5] = this._data[8 * i + 5];
+                this._data[8 * newIndex + 6] = this._data[8 * i + 6];
+                this._data[8 * newIndex + 7] = this._data[8 * i + 7];
+
+                this._positions[3 * newIndex + 0] = this._positions[3 * i + 0];
+                this._positions[3 * newIndex + 1] = this._positions[3 * i + 1];
+                this._positions[3 * newIndex + 2] = this._positions[3 * i + 2];
+
+                this._rotations[4 * newIndex + 0] = this._rotations[4 * i + 0];
+                this._rotations[4 * newIndex + 1] = this._rotations[4 * i + 1];
+                this._rotations[4 * newIndex + 2] = this._rotations[4 * i + 2];
+                this._rotations[4 * newIndex + 3] = this._rotations[4 * i + 3];
+
+                this._scales[3 * newIndex + 0] = this._scales[3 * i + 0];
+                this._scales[3 * newIndex + 1] = this._scales[3 * i + 1];
+                this._scales[3 * newIndex + 2] = this._scales[3 * i + 2];
+
+                newIndex += 1;
+            }
+
+            this._height = Math.ceil((2 * newIndex) / this._width);
+            this._vertexCount = newIndex;
+            this._data = new Uint32Array(this._data.buffer, 0, this._width * this._height * 4);
+            this._positions = new Float32Array(this._positions.buffer, 0, 3 * newIndex);
+            this._rotations = new Float32Array(this._rotations.buffer, 0, 4 * newIndex);
+            this._scales = new Float32Array(this._scales.buffer, 0, 3 * newIndex);
 
             this.dispatchEvent(changeEvent);
         };
