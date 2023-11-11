@@ -12,6 +12,7 @@ class OrbitControls {
     panSpeed: number = 1;
     zoomSpeed: number = 1;
     dampening: number = 0.12;
+    setCameraTarget: (newTarget: Vector3) => void = () => {};
     attach: (newCamera: Camera) => void = () => {};
     detach: () => void = () => {};
     update: () => void;
@@ -74,6 +75,17 @@ class OrbitControls {
         };
 
         this.attach(inputCamera);
+
+        this.setCameraTarget = (newTarget: Vector3) => {
+            if (!camera) return;
+            const dx = newTarget.x - camera.position.x;
+            const dy = newTarget.y - camera.position.y;
+            const dz = newTarget.z - camera.position.z;
+            desiredAlpha = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            desiredBeta = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
+            desiredRadius = -Math.atan2(dx, dz);
+            desiredTarget.set(newTarget.x, newTarget.y, newTarget.z);
+        };
 
         const computeZoomNorm = () => {
             return 0.1 + (0.9 * (desiredRadius - this.minZoom)) / (this.maxZoom - this.minZoom);
