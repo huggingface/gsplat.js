@@ -218,7 +218,48 @@ class Scene extends EventDispatcher {
         };
 
         this.scale = (scale: Vector3) => {
-            throw new Error("Not implemented");
+            const data_f = new Float32Array(this._data.buffer);
+
+            for (let i = 0; i < this.vertexCount; i++) {
+                data_f[8 * i + 0] *= scale.x;
+                data_f[8 * i + 1] *= scale.y;
+                data_f[8 * i + 2] *= scale.z;
+                cachePositions(data_f, i);
+
+                this._scales[3 * i + 0] *= scale.x;
+                this._scales[3 * i + 1] *= scale.y;
+                this._scales[3 * i + 2] *= scale.z;
+
+                const rot = Matrix3.RotationFromQuaternion(
+                    new Quaternion(
+                        this._rotations[4 * i + 1],
+                        this._rotations[4 * i + 2],
+                        this._rotations[4 * i + 3],
+                        -this._rotations[4 * i + 0],
+                    ),
+                );
+
+                const newScale = Matrix3.Diagonal(
+                    new Vector3(this._scales[3 * i + 0], this._scales[3 * i + 1], this._scales[3 * i + 2]),
+                );
+
+                const M = newScale.multiply(rot).buffer;
+
+                const sigma = [
+                    M[0] * M[0] + M[3] * M[3] + M[6] * M[6],
+                    M[0] * M[1] + M[3] * M[4] + M[6] * M[7],
+                    M[0] * M[2] + M[3] * M[5] + M[6] * M[8],
+                    M[1] * M[1] + M[4] * M[4] + M[7] * M[7],
+                    M[1] * M[2] + M[4] * M[5] + M[7] * M[8],
+                    M[2] * M[2] + M[5] * M[5] + M[8] * M[8],
+                ];
+
+                this._data[8 * i + 4] = packHalf2x16(4 * sigma[0], 4 * sigma[1]);
+                this._data[8 * i + 5] = packHalf2x16(4 * sigma[2], 4 * sigma[3]);
+                this._data[8 * i + 6] = packHalf2x16(4 * sigma[4], 4 * sigma[5]);
+            }
+
+            this.dispatchEvent(changeEvent);
         };
 
         this.saveToFile = (name: string) => {

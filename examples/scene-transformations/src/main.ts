@@ -19,8 +19,10 @@ async function main() {
     // Transform it
     const rotation = new SPLAT.Vector3(-0.5, 0, 0);
     const translation = new SPLAT.Vector3(0, -1.5, 0);
+    const scaling = new SPLAT.Vector3(2.5, 2.5, 2.5);
     scene.rotate(SPLAT.Quaternion.FromEuler(rotation));
     scene.translate(translation);
+    scene.scale(scaling);
 
     const handleResize = () => {
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -33,8 +35,17 @@ async function main() {
         requestAnimationFrame(frame);
     };
 
+    const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "PageUp") {
+            scene.scale(new SPLAT.Vector3(1.1, 1.1, 1.1));
+        } else if (e.key === "PageDown") {
+            scene.scale(new SPLAT.Vector3(0.9, 0.9, 0.9));
+        }
+    };
+
     handleResize();
     window.addEventListener("resize", handleResize);
+    window.addEventListener("keydown", onKeyDown);
 
     requestAnimationFrame(frame);
 }
