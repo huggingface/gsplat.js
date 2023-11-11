@@ -26,6 +26,7 @@ async function main() {
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
+        // Use i, j, k, l to move the camera around
         let translation = new SPLAT.Vector3();
         if (event.key === "j") {
             translation = translation.add(new SPLAT.Vector3(-1, 0, 0));
@@ -41,6 +42,13 @@ async function main() {
         }
         camera.position = camera.position.add(translation);
 
+        // Use u to set a random look target near the origin
+        if (event.key === "u") {
+            const target = new SPLAT.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+            controls.setCameraTarget(target);
+        }
+
+        // Use space to reset the camera
         if (event.key === " ") {
             camera.position = new SPLAT.Vector3();
             camera.rotation = new SPLAT.Quaternion();
