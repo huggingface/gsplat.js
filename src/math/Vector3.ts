@@ -1,7 +1,7 @@
 class Vector3 {
-    x: number;
-    y: number;
-    z: number;
+    public readonly x: number;
+    public readonly y: number;
+    public readonly z: number;
 
     constructor(x: number = 0, y: number = 0, z: number = 0) {
         this.x = x;
@@ -67,11 +67,8 @@ class Vector3 {
 
     normalize(): Vector3 {
         const length = this.length();
-        this.x /= length;
-        this.y /= length;
-        this.z /= length;
 
-        return this;
+        return new Vector3(this.x / length, this.y / length, this.z / length);
     }
 
     flat(): number[] {

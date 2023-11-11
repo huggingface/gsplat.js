@@ -2,10 +2,10 @@ import { Matrix3 } from "./Matrix3";
 import { Vector3 } from "./Vector3";
 
 class Quaternion {
-    x: number;
-    y: number;
-    z: number;
-    w: number;
+    public readonly x: number;
+    public readonly y: number;
+    public readonly z: number;
+    public readonly w: number;
 
     constructor(x: number = 0, y: number = 0, z: number = 0, w: number = 1) {
         this.x = x;
@@ -33,12 +33,7 @@ class Quaternion {
 
     normalize(): Quaternion {
         const l = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w);
-        this.x /= l;
-        this.y /= l;
-        this.z /= l;
-        this.w /= l;
-
-        return this;
+        return new Quaternion(this.x / l, this.y / l, this.z / l, this.w / l);
     }
 
     multiply(q: Quaternion): Quaternion {
@@ -88,56 +83,55 @@ class Quaternion {
     }
 
     toEuler(): Vector3 {
-        const e = new Vector3();
-
         const sinr_cosp = 2 * (this.w * this.x + this.y * this.z);
         const cosr_cosp = 1 - 2 * (this.x * this.x + this.y * this.y);
-        e.x = Math.atan2(sinr_cosp, cosr_cosp);
+        const x = Math.atan2(sinr_cosp, cosr_cosp);
 
+        let y;
         const sinp = 2 * (this.w * this.y - this.z * this.x);
         if (Math.abs(sinp) >= 1) {
-            e.y = (Math.sign(sinp) * Math.PI) / 2;
+            y = (Math.sign(sinp) * Math.PI) / 2;
         } else {
-            e.y = Math.asin(sinp);
+            y = Math.asin(sinp);
         }
 
         const siny_cosp = 2 * (this.w * this.z + this.x * this.y);
         const cosy_cosp = 1 - 2 * (this.y * this.y + this.z * this.z);
-        e.z = Math.atan2(siny_cosp, cosy_cosp);
+        const z = Math.atan2(siny_cosp, cosy_cosp);
 
-        return e;
+        return new Vector3(x, y, z);
     }
 
     static FromMatrix3(matrix: Matrix3): Quaternion {
         const m = matrix.buffer;
-        const q = new Quaternion();
         const trace = m[0] + m[4] + m[8];
+        let x, y, z, w;
         if (trace > 0) {
             const s = 0.5 / Math.sqrt(trace + 1.0);
-            q.w = 0.25 / s;
-            q.x = (m[7] - m[5]) * s;
-            q.y = (m[2] - m[6]) * s;
-            q.z = (m[3] - m[1]) * s;
+            w = 0.25 / s;
+            x = (m[7] - m[5]) * s;
+            y = (m[2] - m[6]) * s;
+            z = (m[3] - m[1]) * s;
         } else if (m[0] > m[4] && m[0] > m[8]) {
             const s = 2.0 * Math.sqrt(1.0 + m[0] - m[4] - m[8]);
-            q.w = (m[7] - m[5]) / s;
-            q.x = 0.25 * s;
-            q.y = (m[1] + m[3]) / s;
-            q.z = (m[2] + m[6]) / s;
+            w = (m[7] - m[5]) / s;
+            x = 0.25 * s;
+            y = (m[1] + m[3]) / s;
+            z = (m[2] + m[6]) / s;
         } else if (m[4] > m[8]) {
             const s = 2.0 * Math.sqrt(1.0 + m[4] - m[0] - m[8]);
-            q.w = (m[2] - m[6]) / s;
-            q.x = (m[1] + m[3]) / s;
-            q.y = 0.25 * s;
-            q.z = (m[5] + m[7]) / s;
+            w = (m[2] - m[6]) / s;
+            x = (m[1] + m[3]) / s;
+            y = 0.25 * s;
+            z = (m[5] + m[7]) / s;
         } else {
             const s = 2.0 * Math.sqrt(1.0 + m[8] - m[0] - m[4]);
-            q.w = (m[3] - m[1]) / s;
-            q.x = (m[2] + m[6]) / s;
-            q.y = (m[5] + m[7]) / s;
-            q.z = 0.25 * s;
+            w = (m[3] - m[1]) / s;
+            x = (m[2] + m[6]) / s;
+            y = (m[5] + m[7]) / s;
+            z = 0.25 * s;
         }
-        return q;
+        return new Quaternion(x, y, z, w);
     }
 }
 

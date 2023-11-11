@@ -2,7 +2,7 @@ import { Quaternion } from "./Quaternion";
 import type { Vector3 } from "./Vector3";
 
 class Matrix3 {
-    buffer: number[];
+    public readonly buffer: number[];
 
     // prettier-ignore
     constructor(n11: number = 1, n12: number = 0, n13: number = 0,
