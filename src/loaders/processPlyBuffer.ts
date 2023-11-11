@@ -4,7 +4,7 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-export function processPlyBuffer(inputBuffer: ArrayBuffer, onProgress?: (progress: number) => void) {
+export function processPlyBuffer(inputBuffer: ArrayBuffer) {
     const ubuf = new Uint8Array(inputBuffer);
     const header = new TextDecoder().decode(ubuf.slice(0, 1024 * 10));
     const header_end = "end_header\n";
@@ -99,8 +99,6 @@ export function processPlyBuffer(inputBuffer: ArrayBuffer, onProgress?: (progres
         } else {
             rgba[3] = 255;
         }
-
-        if (j % 1000 === 0) onProgress?.(j / vertexCount);
     }
     return buffer;
 }

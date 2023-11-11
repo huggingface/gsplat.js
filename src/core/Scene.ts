@@ -15,6 +15,7 @@ class Scene extends EventDispatcher {
     setData: (data: Uint8Array) => void;
     translate: (translation: Vector3) => void;
     rotate: (rotation: Quaternion) => void;
+    saveToFile: (name: string) => void;
 
     constructor() {
         super();
@@ -111,29 +112,21 @@ class Scene extends EventDispatcher {
                 data_c[4 * (8 * i + 7) + 3] = u_buffer[32 * i + 24 + 3];
 
                 cacheRotations(u_buffer, i);
-                const rot = [
-                    this._rotations[4 * i + 0],
-                    this._rotations[4 * i + 1],
-                    this._rotations[4 * i + 2],
-                    this._rotations[4 * i + 3],
-                ];
+                const rot = Matrix3.RotationFromQuaternion(
+                    new Quaternion(
+                        this._rotations[4 * i + 1],
+                        this._rotations[4 * i + 2],
+                        this._rotations[4 * i + 3],
+                        -this._rotations[4 * i + 0],
+                    ),
+                );
 
                 cacheScales(f_buffer, i);
-                const scale = [this._scales[3 * i + 0], this._scales[3 * i + 1], this._scales[3 * i + 2]];
+                const scale = Matrix3.Diagonal(
+                    new Vector3(this._scales[3 * i + 0], this._scales[3 * i + 1], this._scales[3 * i + 2]),
+                );
 
-                const M = [
-                    1.0 - 2.0 * (rot[2] * rot[2] + rot[3] * rot[3]),
-                    2.0 * (rot[1] * rot[2] + rot[0] * rot[3]),
-                    2.0 * (rot[1] * rot[3] - rot[0] * rot[2]),
-
-                    2.0 * (rot[1] * rot[2] - rot[0] * rot[3]),
-                    1.0 - 2.0 * (rot[1] * rot[1] + rot[3] * rot[3]),
-                    2.0 * (rot[2] * rot[3] + rot[0] * rot[1]),
-
-                    2.0 * (rot[1] * rot[3] + rot[0] * rot[2]),
-                    2.0 * (rot[2] * rot[3] - rot[0] * rot[1]),
-                    1.0 - 2.0 * (rot[1] * rot[1] + rot[2] * rot[2]),
-                ].map((k, i) => k * scale[Math.floor(i / 3)]);
+                const M = scale.multiply(rot).buffer;
 
                 const sigma = [
                     M[0] * M[0] + M[3] * M[3] + M[6] * M[6],
@@ -186,36 +179,25 @@ class Scene extends EventDispatcher {
                 );
 
                 const newRot = rotation.multiply(currentRotation);
-                if (i === 0) {
-                    console.log(rotation, currentRotation, newRot);
-                }
                 this._rotations[4 * i + 1] = newRot.x;
                 this._rotations[4 * i + 2] = newRot.y;
                 this._rotations[4 * i + 3] = newRot.z;
                 this._rotations[4 * i + 0] = newRot.w;
 
-                const rot = [
-                    this._rotations[4 * i + 0],
-                    this._rotations[4 * i + 1],
-                    this._rotations[4 * i + 2],
-                    this._rotations[4 * i + 3],
-                ];
+                const rot = Matrix3.RotationFromQuaternion(
+                    new Quaternion(
+                        this._rotations[4 * i + 1],
+                        this._rotations[4 * i + 2],
+                        this._rotations[4 * i + 3],
+                        -this._rotations[4 * i + 0],
+                    ),
+                );
 
-                const scale = [this._scales[3 * i + 0], this._scales[3 * i + 1], this._scales[3 * i + 2]];
+                const scale = Matrix3.Diagonal(
+                    new Vector3(this._scales[3 * i + 0], this._scales[3 * i + 1], this._scales[3 * i + 2]),
+                );
 
-                const M = [
-                    1.0 - 2.0 * (rot[2] * rot[2] + rot[3] * rot[3]),
-                    2.0 * (rot[1] * rot[2] + rot[0] * rot[3]),
-                    2.0 * (rot[1] * rot[3] - rot[0] * rot[2]),
-
-                    2.0 * (rot[1] * rot[2] - rot[0] * rot[3]),
-                    1.0 - 2.0 * (rot[1] * rot[1] + rot[3] * rot[3]),
-                    2.0 * (rot[2] * rot[3] + rot[0] * rot[1]),
-
-                    2.0 * (rot[1] * rot[3] + rot[0] * rot[2]),
-                    2.0 * (rot[2] * rot[3] - rot[0] * rot[1]),
-                    1.0 - 2.0 * (rot[1] * rot[1] + rot[2] * rot[2]),
-                ].map((k, i) => k * scale[Math.floor(i / 3)]);
+                const M = scale.multiply(rot).buffer;
 
                 const sigma = [
                     M[0] * M[0] + M[3] * M[3] + M[6] * M[6],
@@ -232,6 +214,15 @@ class Scene extends EventDispatcher {
             }
 
             this.dispatchEvent(changeEvent);
+        };
+
+        this.saveToFile = (name: string) => {
+            if (!document) return;
+            const blob = new Blob([this._data.buffer], { type: "application/octet-stream" });
+            const link = document.createElement("a");
+            link.download = name;
+            link.href = URL.createObjectURL(blob);
+            link.click();
         };
     }
 

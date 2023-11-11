@@ -1,34 +1,21 @@
 import * as SPLAT from "gsplat";
 
-const renderer = new SPLAT.WebGLRenderer();
+const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+const progressDialog = document.getElementById("progress-dialog") as HTMLDialogElement;
+const progressIndicator = document.getElementById("progress-indicator") as HTMLProgressElement;
+
+const renderer = new SPLAT.WebGLRenderer(canvas);
 const scene = new SPLAT.Scene();
 const camera = new SPLAT.Camera();
-const controls = new SPLAT.OrbitControls(camera, renderer.domElement);
-
-function saveToFile(data: Uint8Array, name: string) {
-    const blob = new Blob([data.buffer], { type: "application/octet-stream" });
-    const link = document.createElement("a");
-    link.download = name;
-    link.href = URL.createObjectURL(blob);
-    link.click();
-}
-
-async function convertPLYToSPLAT(url: string) {
-    // Load PLY file into scene
-    await SPLAT.PLYLoader.LoadAsync(url, scene, (progress) => {
-        console.log("Loading ply file: " + progress);
-    });
-
-    // Scene.data is in SPLAT format
-    return scene.data;
-}
+const controls = new SPLAT.OrbitControls(camera, canvas);
 
 async function main() {
     // Load and convert ply from url
     const url =
-        "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bicycle/point_cloud/iteration_7000/point_cloud.ply";
-    const data = await convertPLYToSPLAT(url);
-    saveToFile(data, "bicycle.splat");
+        "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bonsai/point_cloud/iteration_7000/point_cloud.ply";
+    await SPLAT.PLYLoader.LoadAsync(url, scene, (progress) => (progressIndicator.value = progress * 100));
+    progressDialog.close();
+    scene.saveToFile("bonsai.splat");
 
     // Render loop
     const frame = () => {
@@ -48,7 +35,7 @@ async function main() {
         await SPLAT.PLYLoader.LoadFromFileAsync(file, scene, (progress: number) => {
             console.log("Loading PLY file: " + progress);
         });
-        saveToFile(scene.data, file.name.replace(".ply", ".splat"));
+        scene.saveToFile(file.name.replace(".ply", ".splat"));
         loading = false;
     };
 

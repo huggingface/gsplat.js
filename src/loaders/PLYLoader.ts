@@ -26,33 +26,25 @@ class PLYLoader {
             plyData.set(value, bytesRead);
             bytesRead += value.length;
 
-            onProgress?.((0.5 * bytesRead) / contentLength);
+            onProgress?.(bytesRead / contentLength);
         }
 
         if (plyData[0] !== 112 || plyData[1] !== 108 || plyData[2] !== 121 || plyData[3] !== 10) {
             throw new Error("Invalid PLY file");
         }
 
-        const data = new Uint8Array(
-            processPlyBuffer(plyData.buffer, (progress) => {
-                onProgress?.(0.5 + 0.5 * progress);
-            }),
-        );
+        const data = new Uint8Array(processPlyBuffer(plyData.buffer));
         scene.setData(data);
     }
 
     static async LoadFromFileAsync(file: File, scene: Scene, onProgress?: (progress: number) => void): Promise<void> {
         const reader = new FileReader();
         reader.onload = (e) => {
-            const data = new Uint8Array(
-                processPlyBuffer(e.target!.result as ArrayBuffer, (progress) => {
-                    onProgress?.(0.5 + 0.5 * progress);
-                }),
-            );
+            const data = new Uint8Array(processPlyBuffer(e.target!.result as ArrayBuffer));
             scene.setData(data);
         };
         reader.onprogress = (e) => {
-            onProgress?.((0.5 * e.loaded) / e.total);
+            onProgress?.(e.loaded / e.total);
         };
         reader.readAsArrayBuffer(file);
         await new Promise<void>((resolve) => {

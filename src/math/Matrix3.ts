@@ -71,6 +71,14 @@ class Matrix3 {
         );
     }
 
+    static Eye(v: number = 1): Matrix3 {
+        return new Matrix3(v, 0, 0, 0, v, 0, 0, 0, v);
+    }
+
+    static Diagonal(v: Vector3): Matrix3 {
+        return new Matrix3(v.x, 0, 0, 0, v.y, 0, 0, 0, v.z);
+    }
+
     static RotationFromQuaternion(q: Quaternion): Matrix3 {
         const matrix = new Matrix3(
             1 - 2 * q.y * q.y - 2 * q.z * q.z,
