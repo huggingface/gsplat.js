@@ -9,7 +9,7 @@
     "build:wasm": "sh ./compile_wasm.sh",
     "copy:wasm": "ncp ./src/wasm ./dist/wasm",
     "build": "npm run build:wasm && rollup -c && npm run copy:wasm",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "lint": "eslint \"src/**/*.ts\" \"examples/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\" \"examples/**/*.ts\""
   },

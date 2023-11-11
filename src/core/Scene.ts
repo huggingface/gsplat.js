@@ -4,6 +4,8 @@ import { Vector3 } from "../math/Vector3";
 import { EventDispatcher } from "./EventDispatcher";
 
 class Scene extends EventDispatcher {
+    static RowLength = 3 * 4 + 3 * 4 + 4 + 4;
+
     private _data: Uint32Array;
     private _width: number;
     private _height: number;
@@ -59,7 +61,6 @@ class Scene extends EventDispatcher {
         };
 
         const changeEvent = { type: "change" } as Event;
-        const rowLength = 3 * 4 + 3 * 4 + 4 + 4;
 
         this._data = new Uint32Array(0);
         this._vertexCount = 0;
@@ -89,7 +90,7 @@ class Scene extends EventDispatcher {
         };
 
         this.setData = (data: Uint8Array) => {
-            this._vertexCount = data.length / rowLength;
+            this._vertexCount = data.length / Scene.RowLength;
             this._height = Math.ceil((2 * this._vertexCount) / this._width);
             this._data = new Uint32Array(this._width * this._height * 4);
             this._positions = new Float32Array(3 * this._vertexCount);
@@ -264,7 +265,7 @@ class Scene extends EventDispatcher {
         };
 
         this.limitBox = (xMin: number, xMax: number, yMin: number, yMax: number, zMin: number, zMax: number) => {
-            /* if (xMin >= xMax) {
+            if (xMin >= xMax) {
                 throw new Error(`xMin (${xMin}) must be smaller than xMax (${xMax})`);
             }
             if (yMin >= yMax) {
@@ -274,24 +275,59 @@ class Scene extends EventDispatcher {
                 throw new Error(`zMin (${zMin}) must be smaller than zMax (${zMax})`);
             }
 
-            let newArrayIndex = 0;
-            for (let i = 0; i < this.vertexCount; i++) {
-                const x = this.clean_f_buffer[8 * i + 0];
-                const y = this.clean_f_buffer[8 * i + 1];
-                const z = this.clean_f_buffer[8 * i + 2];
+            const mask = new Uint8Array(this._vertexCount);
+            let newVertexCount = 0;
 
-                if (x < xMin || x > xMax || y < yMin || y > yMax || z < zMin || z > zMax) {
-                    continue;
+            for (let i = 0; i < this._vertexCount; i++) {
+                const x = this._positions[3 * i + 0];
+                const y = this._positions[3 * i + 1];
+                const z = this._positions[3 * i + 2];
+
+                if (x >= xMin && x <= xMax && y >= yMin && y <= yMax && z >= zMin && z <= zMax) {
+                    mask[i] = 1;
+                    newVertexCount += 1;
                 }
-
-                for (let j = 0; j < Scene.rowLength; j++) {
-                    this.u_buffer[32 * newArrayIndex + j] = this.clean_u_buffer[32 * i + j];
-                }
-
-                newArrayIndex += 1;
             }
-            this.f_buffer.fill(0, 8 * newArrayIndex, this.clean_f_buffer.length);
-            this.u_buffer.fill(0, 32 * newArrayIndex, this.clean_u_buffer.length); */
+
+            this._height = Math.ceil((2 * newVertexCount) / this._width);
+            const newData = new Uint32Array(this._width * this._height * 4);
+            const newPositions = new Float32Array(3 * newVertexCount);
+            const newRotations = new Float32Array(4 * newVertexCount);
+            const newScales = new Float32Array(3 * newVertexCount);
+
+            let newIndex = 0;
+            for (let i = 0; i < this._vertexCount; i++) {
+                if (mask[i] === 0) continue;
+
+                newData[8 * newIndex + 0] = this._data[8 * i + 0];
+                newData[8 * newIndex + 1] = this._data[8 * i + 1];
+                newData[8 * newIndex + 2] = this._data[8 * i + 2];
+                newData[8 * newIndex + 3] = this._data[8 * i + 3];
+                newData[8 * newIndex + 4] = this._data[8 * i + 4];
+                newData[8 * newIndex + 5] = this._data[8 * i + 5];
+                newData[8 * newIndex + 6] = this._data[8 * i + 6];
+                newData[8 * newIndex + 7] = this._data[8 * i + 7];
+
+                newPositions[3 * newIndex + 0] = this._positions[3 * i + 0];
+                newPositions[3 * newIndex + 1] = this._positions[3 * i + 1];
+                newPositions[3 * newIndex + 2] = this._positions[3 * i + 2];
+
+                newRotations[4 * newIndex + 0] = this._rotations[4 * i + 0];
+                newRotations[4 * newIndex + 1] = this._rotations[4 * i + 1];
+                newRotations[4 * newIndex + 2] = this._rotations[4 * i + 2];
+
+                newScales[3 * newIndex + 0] = this._scales[3 * i + 0];
+                newScales[3 * newIndex + 1] = this._scales[3 * i + 1];
+                newScales[3 * newIndex + 2] = this._scales[3 * i + 2];
+
+                newIndex += 1;
+            }
+
+            this._data = newData;
+            this._vertexCount = newVertexCount;
+            this._positions = newPositions;
+            this._rotations = newRotations;
+            this._scales = newScales;
 
             this.dispatchEvent(changeEvent);
         };
