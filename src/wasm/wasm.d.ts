@@ -12,6 +12,7 @@ interface WasmModule {
         depthBuffer: number,
         depthIndex: number,
         starts: number,
+        counts: number,
     ): void;
 }
 

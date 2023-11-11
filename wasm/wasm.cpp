@@ -1,13 +1,15 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 extern "C"
 {
     void sort(
         float *viewProj, uint32_t vertexCount,
-        float *fBuffer, uint32_t *depthBuffer, 
-        uint32_t *depthIndex, uint32_t *starts)
+        float *fBuffer, uint32_t *depthBuffer,
+        uint32_t *depthIndex, uint32_t *starts,
+        uint32_t *counts)
     {
         int32_t minDepth = 0x7fffffff;
         int32_t maxDepth = 0x80000000;
@@ -30,7 +32,7 @@ extern "C"
 
         const uint32_t depthRange = 256 * 256;
         const float depthInv = (float)depthRange / (maxDepth - minDepth);
-        uint32_t *counts = (uint32_t *)calloc(depthRange, sizeof(uint32_t));
+        memset(counts, 0, depthRange * sizeof(uint32_t));
         for (uint32_t i = 0; i < vertexCount; i++)
         {
             depthBuffer[i] = (depthBuffer[i] - minDepth) * depthInv;

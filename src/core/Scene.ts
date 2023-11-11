@@ -15,6 +15,7 @@ class Scene extends EventDispatcher {
     setData: (data: Uint8Array) => void;
     translate: (translation: Vector3) => void;
     rotate: (rotation: Quaternion) => void;
+    scale: (scale: Vector3) => void;
     saveToFile: (name: string) => void;
 
     constructor() {
@@ -214,6 +215,10 @@ class Scene extends EventDispatcher {
             }
 
             this.dispatchEvent(changeEvent);
+        };
+
+        this.scale = (scale: Vector3) => {
+            throw new Error("Not implemented");
         };
 
         this.saveToFile = (name: string) => {

@@ -197,14 +197,29 @@ export class WebGLRenderer {
             initialized = true;
         };
 
+        const onSceneChange = () => {
+            if (initialized) {
+                this.dispose();
+            }
+
+            initWebGL();
+        };
+
         this.render = (scene: Scene, camera: Camera) => {
             if (scene !== activeScene || camera !== activeCamera) {
                 if (initialized) {
                     this.dispose();
                 }
 
-                activeScene = scene;
                 activeCamera = camera;
+
+                if (scene !== activeScene) {
+                    if (activeScene) {
+                        activeScene.removeEventListener("change", onSceneChange);
+                    }
+                    activeScene = scene;
+                    activeScene.addEventListener("change", onSceneChange);
+                }
 
                 initWebGL();
             }
