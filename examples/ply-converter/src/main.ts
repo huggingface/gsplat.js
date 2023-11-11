@@ -32,9 +32,15 @@ async function main() {
     const selectFile = async (file: File) => {
         if (loading) return;
         loading = true;
-        await SPLAT.PLYLoader.LoadFromFileAsync(file, scene, (progress: number) => {
-            console.log("Loading PLY file: " + progress);
-        });
+        if (file.name.endsWith(".splat")) {
+            await SPLAT.Loader.LoadFromFileAsync(file, scene, (progress: number) => {
+                progressIndicator.value = progress * 100;
+            });
+        } else if (file.name.endsWith(".ply")) {
+            await SPLAT.PLYLoader.LoadFromFileAsync(file, scene, (progress: number) => {
+                progressIndicator.value = progress * 100;
+            });
+        }
         scene.saveToFile(file.name.replace(".ply", ".splat"));
         loading = false;
     };
@@ -43,11 +49,7 @@ async function main() {
         e.preventDefault();
         e.stopPropagation();
 
-        if (
-            e.dataTransfer != null &&
-            e.dataTransfer.files.length > 0 &&
-            e.dataTransfer.files[0].name.endsWith(".ply")
-        ) {
+        if (e.dataTransfer != null && e.dataTransfer.files.length > 0) {
             selectFile(e.dataTransfer.files[0]);
         }
     });
