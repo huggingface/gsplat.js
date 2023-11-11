@@ -276,8 +276,6 @@ class Scene extends EventDispatcher {
             }
 
             const mask = new Uint8Array(this._vertexCount);
-            let newVertexCount = 0;
-
             for (let i = 0; i < this._vertexCount; i++) {
                 const x = this._positions[3 * i + 0];
                 const y = this._positions[3 * i + 1];
@@ -285,49 +283,44 @@ class Scene extends EventDispatcher {
 
                 if (x >= xMin && x <= xMax && y >= yMin && y <= yMax && z >= zMin && z <= zMax) {
                     mask[i] = 1;
-                    newVertexCount += 1;
                 }
             }
-
-            this._height = Math.ceil((2 * newVertexCount) / this._width);
-            const newData = new Uint32Array(this._width * this._height * 4);
-            const newPositions = new Float32Array(3 * newVertexCount);
-            const newRotations = new Float32Array(4 * newVertexCount);
-            const newScales = new Float32Array(3 * newVertexCount);
 
             let newIndex = 0;
             for (let i = 0; i < this._vertexCount; i++) {
                 if (mask[i] === 0) continue;
 
-                newData[8 * newIndex + 0] = this._data[8 * i + 0];
-                newData[8 * newIndex + 1] = this._data[8 * i + 1];
-                newData[8 * newIndex + 2] = this._data[8 * i + 2];
-                newData[8 * newIndex + 3] = this._data[8 * i + 3];
-                newData[8 * newIndex + 4] = this._data[8 * i + 4];
-                newData[8 * newIndex + 5] = this._data[8 * i + 5];
-                newData[8 * newIndex + 6] = this._data[8 * i + 6];
-                newData[8 * newIndex + 7] = this._data[8 * i + 7];
+                this._data[8 * newIndex + 0] = this._data[8 * i + 0];
+                this._data[8 * newIndex + 1] = this._data[8 * i + 1];
+                this._data[8 * newIndex + 2] = this._data[8 * i + 2];
+                this._data[8 * newIndex + 3] = this._data[8 * i + 3];
+                this._data[8 * newIndex + 4] = this._data[8 * i + 4];
+                this._data[8 * newIndex + 5] = this._data[8 * i + 5];
+                this._data[8 * newIndex + 6] = this._data[8 * i + 6];
+                this._data[8 * newIndex + 7] = this._data[8 * i + 7];
 
-                newPositions[3 * newIndex + 0] = this._positions[3 * i + 0];
-                newPositions[3 * newIndex + 1] = this._positions[3 * i + 1];
-                newPositions[3 * newIndex + 2] = this._positions[3 * i + 2];
+                this._positions[3 * newIndex + 0] = this._positions[3 * i + 0];
+                this._positions[3 * newIndex + 1] = this._positions[3 * i + 1];
+                this._positions[3 * newIndex + 2] = this._positions[3 * i + 2];
 
-                newRotations[4 * newIndex + 0] = this._rotations[4 * i + 0];
-                newRotations[4 * newIndex + 1] = this._rotations[4 * i + 1];
-                newRotations[4 * newIndex + 2] = this._rotations[4 * i + 2];
+                this._rotations[4 * newIndex + 0] = this._rotations[4 * i + 0];
+                this._rotations[4 * newIndex + 1] = this._rotations[4 * i + 1];
+                this._rotations[4 * newIndex + 2] = this._rotations[4 * i + 2];
+                this._rotations[4 * newIndex + 3] = this._rotations[4 * i + 3];
 
-                newScales[3 * newIndex + 0] = this._scales[3 * i + 0];
-                newScales[3 * newIndex + 1] = this._scales[3 * i + 1];
-                newScales[3 * newIndex + 2] = this._scales[3 * i + 2];
+                this._scales[3 * newIndex + 0] = this._scales[3 * i + 0];
+                this._scales[3 * newIndex + 1] = this._scales[3 * i + 1];
+                this._scales[3 * newIndex + 2] = this._scales[3 * i + 2];
 
                 newIndex += 1;
             }
 
-            this._data = newData;
-            this._vertexCount = newVertexCount;
-            this._positions = newPositions;
-            this._rotations = newRotations;
-            this._scales = newScales;
+            this._height = Math.ceil((2 * newIndex) / this._width);
+            this._vertexCount = newIndex;
+            this._data = new Uint32Array(this._data.buffer, 0, this._width * this._height * 4);
+            this._positions = new Float32Array(this._positions.buffer, 0, 3 * newIndex);
+            this._rotations = new Float32Array(this._rotations.buffer, 0, 4 * newIndex);
+            this._scales = new Float32Array(this._scales.buffer, 0, 3 * newIndex);
 
             this.dispatchEvent(changeEvent);
         };
