@@ -91,7 +91,11 @@ export class WebGLRenderer {
 
         const initWebGL = () => {
             worker = new SortWorker();
-            worker.postMessage({ scene: activeScene });
+            const serializedScene = {
+                positions: activeScene.positions,
+                vertexCount: activeScene.vertexCount,
+            };
+            worker.postMessage({ scene: serializedScene });
 
             gl.viewport(0, 0, canvas.width, canvas.height);
 
@@ -168,12 +172,12 @@ export class WebGLRenderer {
                 gl.TEXTURE_2D,
                 0,
                 gl.RGBA32UI,
-                activeScene.tex.width,
-                activeScene.tex.height,
+                activeScene.width,
+                activeScene.height,
                 0,
                 gl.RGBA_INTEGER,
                 gl.UNSIGNED_INT,
-                activeScene.tex.data,
+                activeScene.data,
             );
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -194,7 +198,7 @@ export class WebGLRenderer {
         };
 
         this.render = (scene: Scene, camera: Camera) => {
-            if (scene.dirty || scene !== activeScene || camera !== activeCamera) {
+            if (scene !== activeScene || camera !== activeCamera) {
                 if (initialized) {
                     this.dispose();
                 }
@@ -202,11 +206,7 @@ export class WebGLRenderer {
                 activeScene = scene;
                 activeCamera = camera;
 
-                scene.updateTex();
-
                 initWebGL();
-
-                scene.dirty = false;
             }
 
             activeCamera.update(canvas.width, canvas.height);

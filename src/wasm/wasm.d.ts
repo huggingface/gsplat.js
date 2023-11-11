@@ -5,7 +5,6 @@ interface WasmModule {
         viewProj: number,
         vertexCount: number,
         fBuffer: number,
-        uBuffer: number,
         center: number,
         color: number,
         covA: number,

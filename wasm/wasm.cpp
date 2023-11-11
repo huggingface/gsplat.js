@@ -6,17 +6,16 @@ extern "C"
 {
     void sort(
         float *viewProj, uint32_t vertexCount,
-        float *fBuffer, uint8_t *uBuffer,
-        uint32_t *depthBuffer, uint32_t *depthIndex,
-        uint32_t *starts)
+        float *fBuffer, uint32_t *depthBuffer, 
+        uint32_t *depthIndex, uint32_t *starts)
     {
         int32_t minDepth = 0x7fffffff;
         int32_t maxDepth = 0x80000000;
         for (uint32_t i = 0; i < vertexCount; i++)
         {
-            float f0 = viewProj[2] * fBuffer[8 * i + 0];
-            float f1 = viewProj[6] * fBuffer[8 * i + 1];
-            float f2 = viewProj[10] * fBuffer[8 * i + 2];
+            float f0 = viewProj[2] * fBuffer[3 * i + 0];
+            float f1 = viewProj[6] * fBuffer[3 * i + 1];
+            float f2 = viewProj[10] * fBuffer[3 * i + 2];
             int32_t depth = (f0 + f1 + f2) * 4096;
             depthBuffer[i] = depth;
             if (depth > maxDepth)
