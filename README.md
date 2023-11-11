@@ -76,7 +76,7 @@ This script sets up a basic scene with Gaussian Splatting data loaded from URL a
 
 **Q: Can I use .ply files?**
 
-A: Yes, gsplat.js supports `.ply` files. See the [ply-converter example](https://github.com/dylanebert/gsplat.js/blob/main/examples/ply-converter/src/main.ts) for details on how to convert `.ply` to `.splat`. Alternatively, convert PLY files from URL in this [jsfiddle example](https://jsfiddle.net/d8ebst19/5/).
+A: Yes, gsplat.js supports `.ply` files. See the [ply-converter example](https://github.com/dylanebert/gsplat.js/blob/main/examples/ply-converter/src/main.ts) for details on how to convert `.ply` to `.splat`. Alternatively, convert PLY files from URL in this [jsfiddle example](https://jsfiddle.net/2sq3pvdt/1/).
 
 **Q: What are .splat files?**
 
