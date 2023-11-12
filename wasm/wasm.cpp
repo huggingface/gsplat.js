@@ -49,7 +49,5 @@ extern "C"
         {
             depthIndex[starts[depthBuffer[i]]++] = i;
         }
-
-        free(counts);
     }
 }
