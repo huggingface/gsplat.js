@@ -9,11 +9,14 @@ const scene = new SPLAT.Scene();
 const camera = new SPLAT.Camera();
 const controls = new SPLAT.OrbitControls(camera, canvas);
 
+const format = "";
+// const format = "polycam"; // Uncomment to use polycam format
+
 async function main() {
     // Load and convert ply from url
     const url =
         "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bonsai/point_cloud/iteration_7000/point_cloud.ply";
-    await SPLAT.PLYLoader.LoadAsync(url, scene, (progress) => (progressIndicator.value = progress * 100));
+    await SPLAT.PLYLoader.LoadAsync(url, scene, (progress) => (progressIndicator.value = progress * 100), format);
     progressDialog.close();
     scene.saveToFile("bonsai.splat");
 
@@ -37,9 +40,14 @@ async function main() {
                 progressIndicator.value = progress * 100;
             });
         } else if (file.name.endsWith(".ply")) {
-            await SPLAT.PLYLoader.LoadFromFileAsync(file, scene, (progress: number) => {
-                progressIndicator.value = progress * 100;
-            });
+            await SPLAT.PLYLoader.LoadFromFileAsync(
+                file,
+                scene,
+                (progress: number) => {
+                    progressIndicator.value = progress * 100;
+                },
+                format,
+            );
         }
         scene.saveToFile(file.name.replace(".ply", ".splat"));
         loading = false;
