@@ -1,9 +1,16 @@
 import { Scene } from "../core/Scene";
+import { Vector3 } from "../math/Vector3";
+import { Quaternion } from "../math/Quaternion";
 
 class PLYLoader {
     static SH_C0 = 0.28209479177387814;
 
-    static async LoadAsync(url: string, scene: Scene, onProgress?: (progress: number) => void): Promise<void> {
+    static async LoadAsync(
+        url: string,
+        scene: Scene,
+        onProgress?: (progress: number) => void,
+        format: string = "",
+    ): Promise<void> {
         const req = await fetch(url, {
             mode: "cors",
             credentials: "omit",
@@ -34,14 +41,19 @@ class PLYLoader {
             throw new Error("Invalid PLY file");
         }
 
-        const data = new Uint8Array(this._ParsePLYBuffer(plyData.buffer));
+        const data = new Uint8Array(this._ParsePLYBuffer(plyData.buffer, format));
         scene.setData(data);
     }
 
-    static async LoadFromFileAsync(file: File, scene: Scene, onProgress?: (progress: number) => void): Promise<void> {
+    static async LoadFromFileAsync(
+        file: File,
+        scene: Scene,
+        onProgress?: (progress: number) => void,
+        format: string = "",
+    ): Promise<void> {
         const reader = new FileReader();
         reader.onload = (e) => {
-            const data = new Uint8Array(this._ParsePLYBuffer(e.target!.result as ArrayBuffer));
+            const data = new Uint8Array(this._ParsePLYBuffer(e.target!.result as ArrayBuffer, format));
             scene.setData(data);
         };
         reader.onprogress = (e) => {
@@ -55,7 +67,7 @@ class PLYLoader {
         });
     }
 
-    private static _ParsePLYBuffer(inputBuffer: ArrayBuffer): ArrayBuffer {
+    private static _ParsePLYBuffer(inputBuffer: ArrayBuffer, format: string): ArrayBuffer {
         type PlyProperty = {
             name: string;
             type: string;
@@ -95,6 +107,8 @@ class PLYLoader {
 
         const dataView = new DataView(inputBuffer, header_end_index + header_end.length);
         const buffer = new ArrayBuffer(Scene.RowLength * vertexCount);
+
+        const q_polycam = Quaternion.FromEuler(new Vector3(Math.PI / 2, 0, 0));
 
         for (let i = 0; i < vertexCount; i++) {
             const position = new Float32Array(buffer, i * Scene.RowLength, 3);
@@ -178,11 +192,27 @@ class PLYLoader {
                 }
             });
 
-            const qlen = r0 * r0 + r1 * r1 + r2 * r2 + r3 * r3;
-            rot[0] = (r0 / qlen) * 128 + 128;
-            rot[1] = (r1 / qlen) * 128 + 128;
-            rot[2] = (r2 / qlen) * 128 + 128;
-            rot[3] = (r3 / qlen) * 128 + 128;
+            let q = new Quaternion(r1, r2, r3, r0);
+
+            switch (format) {
+                case "polycam": {
+                    const temp = position[1];
+                    position[1] = -position[2];
+                    position[2] = temp;
+                    q = q_polycam.multiply(q);
+                    break;
+                }
+                case "":
+                    break;
+                default:
+                    throw new Error(`Unsupported format: ${format}`);
+            }
+
+            q = q.normalize();
+            rot[0] = q.w * 128 + 128;
+            rot[1] = q.x * 128 + 128;
+            rot[2] = q.y * 128 + 128;
+            rot[3] = q.z * 128 + 128;
         }
 
         return buffer;
