@@ -13,6 +13,7 @@ class Scene extends EventDispatcher {
     private _positions: Float32Array;
     private _rotations: Float32Array;
     private _scales: Float32Array;
+    private _colors: Uint8Array;
 
     setData: (data: Uint8Array) => void;
     translate: (translation: Vector3) => void;
@@ -69,6 +70,7 @@ class Scene extends EventDispatcher {
         this._positions = new Float32Array(0);
         this._rotations = new Float32Array(0);
         this._scales = new Float32Array(0);
+        this._colors = new Uint8Array(0);
 
         this.setData = (data: Uint8Array) => {
             this._vertexCount = data.length / Scene.RowLength;
@@ -77,6 +79,7 @@ class Scene extends EventDispatcher {
             this._positions = new Float32Array(3 * this._vertexCount);
             this._rotations = new Float32Array(4 * this._vertexCount);
             this._scales = new Float32Array(3 * this._vertexCount);
+            this._colors = new Uint8Array(4 * this._vertexCount);
 
             const f_buffer = new Float32Array(data.buffer);
             const u_buffer = new Uint8Array(data.buffer);
@@ -98,14 +101,19 @@ class Scene extends EventDispatcher {
                 this._scales[3 * i + 1] = f_buffer[8 * i + 3 + 1];
                 this._scales[3 * i + 2] = f_buffer[8 * i + 3 + 2];
 
+                this._colors[4 * i + 0] = u_buffer[32 * i + 24 + 0];
+                this._colors[4 * i + 1] = u_buffer[32 * i + 24 + 1];
+                this._colors[4 * i + 2] = u_buffer[32 * i + 24 + 2];
+                this._colors[4 * i + 3] = u_buffer[32 * i + 24 + 3];
+
                 data_f[8 * i + 0] = this._positions[3 * i + 0];
                 data_f[8 * i + 1] = this._positions[3 * i + 1];
                 data_f[8 * i + 2] = this._positions[3 * i + 2];
 
-                data_c[4 * (8 * i + 7) + 0] = u_buffer[32 * i + 24 + 0];
-                data_c[4 * (8 * i + 7) + 1] = u_buffer[32 * i + 24 + 1];
-                data_c[4 * (8 * i + 7) + 2] = u_buffer[32 * i + 24 + 2];
-                data_c[4 * (8 * i + 7) + 3] = u_buffer[32 * i + 24 + 3];
+                data_c[4 * (8 * i + 7) + 0] = this._colors[4 * i + 0];
+                data_c[4 * (8 * i + 7) + 1] = this._colors[4 * i + 1];
+                data_c[4 * (8 * i + 7) + 2] = this._colors[4 * i + 2];
+                data_c[4 * (8 * i + 7) + 3] = this._colors[4 * i + 3];
 
                 const rot = Matrix3.RotationFromQuaternion(
                     new Quaternion(
@@ -312,6 +320,11 @@ class Scene extends EventDispatcher {
                 this._scales[3 * newIndex + 1] = this._scales[3 * i + 1];
                 this._scales[3 * newIndex + 2] = this._scales[3 * i + 2];
 
+                this._colors[4 * newIndex + 0] = this._colors[4 * i + 0];
+                this._colors[4 * newIndex + 1] = this._colors[4 * i + 1];
+                this._colors[4 * newIndex + 2] = this._colors[4 * i + 2];
+                this._colors[4 * newIndex + 3] = this._colors[4 * i + 3];
+
                 newIndex += 1;
             }
 
@@ -321,6 +334,7 @@ class Scene extends EventDispatcher {
             this._positions = new Float32Array(this._positions.buffer, 0, 3 * newIndex);
             this._rotations = new Float32Array(this._rotations.buffer, 0, 4 * newIndex);
             this._scales = new Float32Array(this._scales.buffer, 0, 3 * newIndex);
+            this._colors = new Uint8Array(this._colors.buffer, 0, 4 * newIndex);
 
             this.dispatchEvent(changeEvent);
         };
@@ -333,17 +347,15 @@ class Scene extends EventDispatcher {
             const f_buffer = new Float32Array(outputData.buffer);
             const u_buffer = new Uint8Array(outputData.buffer);
 
-            const data_c = new Uint8Array(this._data.buffer);
-
             for (let i = 0; i < this._vertexCount; i++) {
                 f_buffer[8 * i + 0] = this._positions[3 * i + 0];
                 f_buffer[8 * i + 1] = this._positions[3 * i + 1];
                 f_buffer[8 * i + 2] = this._positions[3 * i + 2];
 
-                u_buffer[32 * i + 24 + 0] = data_c[4 * (8 * i + 7) + 0];
-                u_buffer[32 * i + 24 + 1] = data_c[4 * (8 * i + 7) + 1];
-                u_buffer[32 * i + 24 + 2] = data_c[4 * (8 * i + 7) + 2];
-                u_buffer[32 * i + 24 + 3] = data_c[4 * (8 * i + 7) + 3];
+                u_buffer[32 * i + 24 + 0] = this._colors[4 * i + 0];
+                u_buffer[32 * i + 24 + 1] = this._colors[4 * i + 1];
+                u_buffer[32 * i + 24 + 2] = this._colors[4 * i + 2];
+                u_buffer[32 * i + 24 + 3] = this._colors[4 * i + 3];
 
                 f_buffer[8 * i + 3 + 0] = this._scales[3 * i + 0];
                 f_buffer[8 * i + 3 + 1] = this._scales[3 * i + 1];
