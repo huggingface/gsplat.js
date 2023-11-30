@@ -54,6 +54,18 @@ class Quaternion {
         );
     }
 
+    inverse(): Quaternion {
+        const l = this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w;
+        return new Quaternion(-this.x / l, -this.y / l, -this.z / l, this.w / l);
+    }
+
+    apply(v: Vector3): Vector3 {
+        const vecQuat = new Quaternion(v.x, v.y, v.z, 0);
+        const conjugate = new Quaternion(-this.x, -this.y, -this.z, this.w);
+        const rotatedQuat = this.multiply(vecQuat).multiply(conjugate);
+        return new Vector3(rotatedQuat.x, rotatedQuat.y, rotatedQuat.z);
+    }
+
     flat(): number[] {
         return [this.x, this.y, this.z, this.w];
     }
@@ -132,6 +144,17 @@ class Quaternion {
             z = 0.25 * s;
         }
         return new Quaternion(x, y, z, w);
+    }
+
+    static FromAxisAngle(axis: Vector3, angle: number): Quaternion {
+        const halfAngle = angle / 2;
+        const sin = Math.sin(halfAngle);
+        const cos = Math.cos(halfAngle);
+        return new Quaternion(axis.x * sin, axis.y * sin, axis.z * sin, cos);
+    }
+
+    toString(): string {
+        return `[${this.flat().join(", ")}]`;
     }
 }
 

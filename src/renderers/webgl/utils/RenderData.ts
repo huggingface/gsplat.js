@@ -1,99 +1,206 @@
 import { Scene } from "../../../core/Scene";
-import { Matrix3 } from "../../../math/Matrix3";
-import { Quaternion } from "../../../math/Quaternion";
-import { Vector3 } from "../../../math/Vector3";
+import { Splat } from "../../../splats/Splat";
+import DataWorker from "web-worker:./DataWorker.ts";
 
 class RenderData {
-    private _buffer: Uint32Array;
+    public dataChanged = false;
+    public transformsChanged = false;
+
+    private _splatIndices: Map<Splat, number>;
+    private _offsets: Map<Splat, number>;
+    private _data: Uint32Array;
     private _width: number;
     private _height: number;
+    private _transforms: Float32Array;
+    private _transformsWidth: number;
+    private _transformsHeight: number;
+    private _transformIndices: Uint32Array;
+    private _transformIndicesWidth: number;
+    private _transformIndicesHeight: number;
+    private _positions: Float32Array;
+    private _rotations: Float32Array;
+    private _scales: Float32Array;
+    private _vertexCount: number;
+    private _updating: Set<Splat> = new Set<Splat>();
+    private _dirty: Set<Splat> = new Set<Splat>();
+    private _worker: Worker;
+
+    getSplat: (index: number) => Splat | null;
+    getLocalIndex: (splat: Splat, index: number) => number;
+    markDirty: (splat: Splat) => void;
+    rebuild: () => void;
+    dispose: () => void;
 
     constructor(scene: Scene) {
-        const _floatView: Float32Array = new Float32Array(1);
-        const _int32View: Int32Array = new Int32Array(_floatView.buffer);
+        let vertexCount = 0;
+        let splatIndex = 0;
+        this._splatIndices = new Map<Splat, number>();
+        this._offsets = new Map<Splat, number>();
+        const lookup = new Map<number, Splat>();
+        for (const object of scene.objects) {
+            if (object instanceof Splat) {
+                this._splatIndices.set(object, splatIndex);
+                this._offsets.set(object, vertexCount);
+                lookup.set(vertexCount, object);
+                vertexCount += object.data.vertexCount;
+                splatIndex++;
+            }
+        }
 
-        const floatToHalf = (float: number) => {
-            _floatView[0] = float;
-            const f = _int32View[0];
+        this._vertexCount = vertexCount;
+        this._width = 2048;
+        this._height = Math.ceil((2 * this.vertexCount) / this.width);
+        this._data = new Uint32Array(this.width * this.height * 4);
 
-            const sign = (f >> 31) & 0x0001;
-            const exp = (f >> 23) & 0x00ff;
-            let frac = f & 0x007fffff;
+        this._transformsWidth = 5;
+        this._transformsHeight = lookup.size;
+        this._transforms = new Float32Array(this._transformsWidth * this._transformsHeight * 4);
 
-            let newExp;
-            if (exp == 0) {
-                newExp = 0;
-            } else if (exp < 113) {
-                newExp = 0;
-                frac |= 0x00800000;
-                frac = frac >> (113 - exp);
-                if (frac & 0x01000000) {
-                    newExp = 1;
-                    frac = 0;
+        this._transformIndicesWidth = 1024;
+        this._transformIndicesHeight = Math.ceil(this.vertexCount / this._transformIndicesWidth);
+        this._transformIndices = new Uint32Array(this._transformIndicesWidth * this._transformIndicesHeight);
+
+        this._positions = new Float32Array(this.vertexCount * 3);
+        this._rotations = new Float32Array(this.vertexCount * 4);
+        this._scales = new Float32Array(this.vertexCount * 3);
+
+        this._worker = new DataWorker();
+
+        const updateTransform = (splat: Splat) => {
+            const splatIndex = this._splatIndices.get(splat) as number;
+            this._transforms.set(splat.transform.buffer, splatIndex * 20);
+            this._transforms[splatIndex * 20 + 16] = splat.selected ? 1 : 0;
+            splat.positionChanged = false;
+            splat.rotationChanged = false;
+            splat.scaleChanged = false;
+            splat.selectedChanged = false;
+            this.transformsChanged = true;
+        };
+
+        this._worker.onmessage = (e) => {
+            if (e.data.response) {
+                const response = e.data.response;
+                const splat = lookup.get(response.offset) as Splat;
+                updateTransform(splat);
+
+                const splatIndex = this._splatIndices.get(splat) as number;
+                for (let i = 0; i < splat.data.vertexCount; i++) {
+                    this._transformIndices[response.offset + i] = splatIndex;
                 }
-            } else if (exp < 142) {
-                newExp = exp - 112;
-            } else {
-                newExp = 31;
-                frac = 0;
+
+                this._data.set(response.data, response.offset * 8);
+                splat.data.reattach(
+                    response.positions,
+                    response.rotations,
+                    response.scales,
+                    response.colors,
+                    response.selection,
+                );
+
+                this._positions.set(response.worldPositions, response.offset * 3);
+                this._rotations.set(response.worldRotations, response.offset * 4);
+                this._scales.set(response.worldScales, response.offset * 3);
+
+                this._updating.delete(splat);
+
+                splat.selectedChanged = false;
+
+                this.dataChanged = true;
+            }
+        };
+
+        const build = (splat: Splat, force: boolean = false) => {
+            if (
+                force ||
+                splat.positionChanged ||
+                splat.rotationChanged ||
+                splat.scaleChanged ||
+                splat.selectedChanged
+            ) {
+                updateTransform(splat);
             }
 
-            return (sign << 15) | (newExp << 10) | (frac >> 13);
-        };
+            if (!force && (!splat.data.changed || splat.data.detached)) return;
 
-        const packHalf2x16 = (x: number, y: number) => {
-            return (floatToHalf(x) | (floatToHalf(y) << 16)) >>> 0;
-        };
+            const serializedSplat = {
+                position: new Float32Array(splat.position.flat()),
+                rotation: new Float32Array(splat.rotation.flat()),
+                scale: new Float32Array(splat.scale.flat()),
+                selected: splat.selected,
+                vertexCount: splat.data.vertexCount,
+                positions: splat.data.positions,
+                rotations: splat.data.rotations,
+                scales: splat.data.scales,
+                colors: splat.data.colors,
+                selection: splat.data.selection,
+                offset: this._offsets.get(splat) as number,
+            };
 
-        this._width = 2048;
-        this._height = Math.ceil((2 * scene.vertexCount) / this._width);
-        this._buffer = new Uint32Array(this._width * this._height * 4);
-
-        const data_f = new Float32Array(this._buffer.buffer);
-        const data_c = new Uint8Array(this._buffer.buffer);
-
-        for (let i = 0; i < scene.vertexCount; i++) {
-            data_f[8 * i + 0] = scene.positions[3 * i + 0];
-            data_f[8 * i + 1] = scene.positions[3 * i + 1];
-            data_f[8 * i + 2] = scene.positions[3 * i + 2];
-
-            data_c[4 * (8 * i + 7) + 0] = scene.colors[4 * i + 0];
-            data_c[4 * (8 * i + 7) + 1] = scene.colors[4 * i + 1];
-            data_c[4 * (8 * i + 7) + 2] = scene.colors[4 * i + 2];
-            data_c[4 * (8 * i + 7) + 3] = scene.colors[4 * i + 3];
-
-            const rot = Matrix3.RotationFromQuaternion(
-                new Quaternion(
-                    scene.rotations[4 * i + 1],
-                    scene.rotations[4 * i + 2],
-                    scene.rotations[4 * i + 3],
-                    -scene.rotations[4 * i + 0],
-                ),
+            this._worker.postMessage(
+                {
+                    splat: serializedSplat,
+                },
+                [
+                    serializedSplat.position.buffer,
+                    serializedSplat.rotation.buffer,
+                    serializedSplat.scale.buffer,
+                    serializedSplat.positions.buffer,
+                    serializedSplat.rotations.buffer,
+                    serializedSplat.scales.buffer,
+                    serializedSplat.colors.buffer,
+                    serializedSplat.selection.buffer,
+                ],
             );
 
-            const scale = Matrix3.Diagonal(
-                new Vector3(scene.scales[3 * i + 0], scene.scales[3 * i + 1], scene.scales[3 * i + 2]),
-            );
+            this._updating.add(splat);
 
-            const M = scale.multiply(rot).buffer;
+            splat.data.detached = true;
+        };
 
-            const sigma = [
-                M[0] * M[0] + M[3] * M[3] + M[6] * M[6],
-                M[0] * M[1] + M[3] * M[4] + M[6] * M[7],
-                M[0] * M[2] + M[3] * M[5] + M[6] * M[8],
-                M[1] * M[1] + M[4] * M[4] + M[7] * M[7],
-                M[1] * M[2] + M[4] * M[5] + M[7] * M[8],
-                M[2] * M[2] + M[5] * M[5] + M[8] * M[8],
-            ];
+        this.getSplat = (index: number) => {
+            let splat = null;
+            for (const [key, value] of this._offsets) {
+                if (index >= value) {
+                    splat = key;
+                } else {
+                    break;
+                }
+            }
+            return splat;
+        };
 
-            this._buffer[8 * i + 4] = packHalf2x16(4 * sigma[0], 4 * sigma[1]);
-            this._buffer[8 * i + 5] = packHalf2x16(4 * sigma[2], 4 * sigma[3]);
-            this._buffer[8 * i + 6] = packHalf2x16(4 * sigma[4], 4 * sigma[5]);
+        this.getLocalIndex = (splat: Splat, index: number) => {
+            const offset = this._offsets.get(splat) as number;
+            return index - offset;
+        };
+
+        this.markDirty = (splat: Splat) => {
+            this._dirty.add(splat);
+        };
+
+        this.rebuild = () => {
+            for (const splat of this._dirty) {
+                build(splat);
+            }
+
+            this._dirty.clear();
+        };
+
+        this.dispose = () => {
+            this._worker.terminate();
+        };
+
+        for (const splat of this._splatIndices.keys()) {
+            build(splat, true);
         }
     }
 
-    get buffer() {
-        return this._buffer;
+    get offsets() {
+        return this._offsets;
+    }
+
+    get data() {
+        return this._data;
     }
 
     get width() {
@@ -102,6 +209,54 @@ class RenderData {
 
     get height() {
         return this._height;
+    }
+
+    get transforms() {
+        return this._transforms;
+    }
+
+    get transformsWidth() {
+        return this._transformsWidth;
+    }
+
+    get transformsHeight() {
+        return this._transformsHeight;
+    }
+
+    get transformIndices() {
+        return this._transformIndices;
+    }
+
+    get transformIndicesWidth() {
+        return this._transformIndicesWidth;
+    }
+
+    get transformIndicesHeight() {
+        return this._transformIndicesHeight;
+    }
+
+    get positions() {
+        return this._positions;
+    }
+
+    get rotations() {
+        return this._rotations;
+    }
+
+    get scales() {
+        return this._scales;
+    }
+
+    get vertexCount() {
+        return this._vertexCount;
+    }
+
+    get needsRebuild() {
+        return this._dirty.size > 0;
+    }
+
+    get updating() {
+        return this._updating.size > 0;
     }
 }
 

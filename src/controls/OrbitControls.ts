@@ -1,4 +1,4 @@
-import type { Camera } from "../cameras/Camera";
+import { Camera } from "../cameras/Camera";
 import { Matrix3 } from "../math/Matrix3";
 import { Quaternion } from "../math/Quaternion";
 import { Vector3 } from "../math/Vector3";
@@ -13,14 +13,12 @@ class OrbitControls {
     zoomSpeed: number = 1;
     dampening: number = 0.12;
     setCameraTarget: (newTarget: Vector3) => void = () => {};
-    attach: (newCamera: Camera) => void = () => {};
-    detach: () => void = () => {};
     update: () => void;
     dispose: () => void;
 
     constructor(
-        inputCamera: Camera,
-        domElement: HTMLElement,
+        camera: Camera,
+        canvas: HTMLElement,
         alpha: number = 0.5,
         beta: number = 0.5,
         radius: number = 5,
@@ -42,11 +40,10 @@ class OrbitControls {
 
         const keys: { [key: string]: boolean } = {};
 
-        let camera: Camera | null = null;
         let isUpdatingCamera = false;
 
         const onCameraChange = () => {
-            if (!camera || isUpdatingCamera) return;
+            if (isUpdatingCamera) return;
 
             const eulerRotation = camera.rotation.toEuler();
             desiredAlpha = -eulerRotation.y;
@@ -59,25 +56,9 @@ class OrbitControls {
             desiredTarget = new Vector3(x, y, z);
         };
 
-        this.attach = (newCamera: Camera) => {
-            if (camera) {
-                this.detach();
-            }
-            camera = newCamera;
-            camera.addEventListener("change", onCameraChange);
-        };
-
-        this.detach = () => {
-            if (!camera) return;
-
-            camera.removeEventListener("change", onCameraChange);
-            camera = null;
-        };
-
-        this.attach(inputCamera);
+        camera.addEventListener("objectChanged", onCameraChange);
 
         this.setCameraTarget = (newTarget: Vector3) => {
-            if (!camera) return;
             const dx = newTarget.x - camera.position.x;
             const dy = newTarget.y - camera.position.y;
             const dz = newTarget.z - camera.position.z;
@@ -239,8 +220,6 @@ class OrbitControls {
         };
 
         this.update = () => {
-            if (!camera) return;
-
             isUpdatingCamera = true;
 
             alpha = lerp(alpha, desiredAlpha, this.dampening);
@@ -258,7 +237,6 @@ class OrbitControls {
             const ry = Math.atan2(direction.x, direction.z);
             camera.rotation = Quaternion.FromEuler(new Vector3(rx, ry, 0));
 
-            // Just spit balling here on the values
             const moveSpeed = 0.025;
             const rotateSpeed = 0.01;
 
@@ -288,18 +266,18 @@ class OrbitControls {
         };
 
         this.dispose = () => {
-            domElement.removeEventListener("dragenter", preventDefault);
-            domElement.removeEventListener("dragover", preventDefault);
-            domElement.removeEventListener("dragleave", preventDefault);
-            domElement.removeEventListener("contextmenu", preventDefault);
+            canvas.removeEventListener("dragenter", preventDefault);
+            canvas.removeEventListener("dragover", preventDefault);
+            canvas.removeEventListener("dragleave", preventDefault);
+            canvas.removeEventListener("contextmenu", preventDefault);
 
-            domElement.removeEventListener("mousedown", onMouseDown);
-            domElement.removeEventListener("mousemove", onMouseMove);
-            domElement.removeEventListener("wheel", onWheel);
+            canvas.removeEventListener("mousedown", onMouseDown);
+            canvas.removeEventListener("mousemove", onMouseMove);
+            canvas.removeEventListener("wheel", onWheel);
 
-            domElement.removeEventListener("touchstart", onTouchStart);
-            domElement.removeEventListener("touchend", onTouchEnd);
-            domElement.removeEventListener("touchmove", onTouchMove);
+            canvas.removeEventListener("touchstart", onTouchStart);
+            canvas.removeEventListener("touchend", onTouchEnd);
+            canvas.removeEventListener("touchmove", onTouchMove);
 
             if (enableKeyboardControls) {
                 window.removeEventListener("keydown", onKeyDown);
@@ -312,18 +290,18 @@ class OrbitControls {
             window.addEventListener("keyup", onKeyUp);
         }
 
-        domElement.addEventListener("dragenter", preventDefault);
-        domElement.addEventListener("dragover", preventDefault);
-        domElement.addEventListener("dragleave", preventDefault);
-        domElement.addEventListener("contextmenu", preventDefault);
+        canvas.addEventListener("dragenter", preventDefault);
+        canvas.addEventListener("dragover", preventDefault);
+        canvas.addEventListener("dragleave", preventDefault);
+        canvas.addEventListener("contextmenu", preventDefault);
 
-        domElement.addEventListener("mousedown", onMouseDown);
-        domElement.addEventListener("mousemove", onMouseMove);
-        domElement.addEventListener("wheel", onWheel);
+        canvas.addEventListener("mousedown", onMouseDown);
+        canvas.addEventListener("mousemove", onMouseMove);
+        canvas.addEventListener("wheel", onWheel);
 
-        domElement.addEventListener("touchstart", onTouchStart);
-        domElement.addEventListener("touchend", onTouchEnd);
-        domElement.addEventListener("touchmove", onTouchMove);
+        canvas.addEventListener("touchstart", onTouchStart);
+        canvas.addEventListener("touchend", onTouchEnd);
+        canvas.addEventListener("touchmove", onTouchMove);
 
         this.update();
     }

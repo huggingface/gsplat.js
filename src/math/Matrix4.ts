@@ -1,3 +1,6 @@
+import { Quaternion } from "./Quaternion";
+import { Vector3 } from "./Vector3";
+
 class Matrix4 {
     public readonly buffer: number[];
 
@@ -61,6 +64,112 @@ class Matrix4 {
             e[8], e[9], e[10], e[11], 
             e[12], e[13], e[14], e[15]
         );
+    }
+
+    determinant(): number {
+        const e = this.buffer;
+        // prettier-ignore
+        return (
+            e[12] * e[9] * e[6] * e[3] - e[8] * e[13] * e[6] * e[3] - e[12] * e[5] * e[10] * e[3] + e[4] * e[13] * e[10] * e[3] +
+            e[8] * e[5] * e[14] * e[3] - e[4] * e[9] * e[14] * e[3] - e[12] * e[9] * e[2] * e[7] + e[8] * e[13] * e[2] * e[7] +
+            e[12] * e[1] * e[10] * e[7] - e[0] * e[13] * e[10] * e[7] - e[8] * e[1] * e[14] * e[7] + e[0] * e[9] * e[14] * e[7] +
+            e[12] * e[5] * e[2] * e[11] - e[4] * e[13] * e[2] * e[11] - e[12] * e[1] * e[6] * e[11] + e[0] * e[13] * e[6] * e[11] +
+            e[4] * e[1] * e[14] * e[11] - e[0] * e[5] * e[14] * e[11] - e[8] * e[5] * e[2] * e[15] + e[4] * e[9] * e[2] * e[15] +
+            e[8] * e[1] * e[6] * e[15] - e[0] * e[9] * e[6] * e[15] - e[4] * e[1] * e[10] * e[15] + e[0] * e[5] * e[10] * e[15]
+        );
+    }
+
+    invert(): Matrix4 {
+        const e = this.buffer;
+        const det = this.determinant();
+        if (det === 0) {
+            throw new Error("Matrix is not invertible.");
+        }
+        const invDet = 1 / det;
+        // prettier-ignore
+        return new Matrix4(
+            invDet * (
+                e[5] * e[10] * e[15] - e[5] * e[11] * e[14] - e[9] * e[6] * e[15] + e[9] * e[7] * e[14] + e[13] * e[6] * e[11] - e[13] * e[7] * e[10]
+            ),
+            invDet * (
+                -e[1] * e[10] * e[15] + e[1] * e[11] * e[14] + e[9] * e[2] * e[15] - e[9] * e[3] * e[14] - e[13] * e[2] * e[11] + e[13] * e[3] * e[10]
+            ),
+            invDet * (
+                e[1] * e[6] * e[15] - e[1] * e[7] * e[14] - e[5] * e[2] * e[15] + e[5] * e[3] * e[14] + e[13] * e[2] * e[7] - e[13] * e[3] * e[6]
+            ),
+            invDet * (
+                -e[1] * e[6] * e[11] + e[1] * e[7] * e[10] + e[5] * e[2] * e[11] - e[5] * e[3] * e[10] - e[9] * e[2] * e[7] + e[9] * e[3] * e[6]
+            ),
+            invDet * (
+                -e[4] * e[10] * e[15] + e[4] * e[11] * e[14] + e[8] * e[6] * e[15] - e[8] * e[7] * e[14] - e[12] * e[6] * e[11] + e[12] * e[7] * e[10]
+            ),
+            invDet * (
+                e[0] * e[10] * e[15] - e[0] * e[11] * e[14] - e[8] * e[2] * e[15] + e[8] * e[3] * e[14] + e[12] * e[2] * e[11] - e[12] * e[3] * e[10]
+            ),
+            invDet * (
+                -e[0] * e[6] * e[15] + e[0] * e[7] * e[14] + e[4] * e[2] * e[15] - e[4] * e[3] * e[14] - e[12] * e[2] * e[7] + e[12] * e[3] * e[6]
+            ),
+            invDet * (
+                e[0] * e[6] * e[11] - e[0] * e[7] * e[10] - e[4] * e[2] * e[11] + e[4] * e[3] * e[10] + e[8] * e[2] * e[7] - e[8] * e[3] * e[6]
+            ),
+            invDet * (
+                e[4] * e[9] * e[15] - e[4] * e[11] * e[13] - e[8] * e[5] * e[15] + e[8] * e[7] * e[13] + e[12] * e[5] * e[11] - e[12] * e[7] * e[9]
+            ),
+            invDet * (
+                -e[0] * e[9] * e[15] + e[0] * e[11] * e[13] + e[8] * e[1] * e[15] - e[8] * e[3] * e[13] - e[12] * e[1] * e[11] + e[12] * e[3] * e[9]
+            ),
+            invDet * (
+                e[0] * e[5] * e[15] - e[0] * e[7] * e[13] - e[4] * e[1] * e[15] + e[4] * e[3] * e[13] + e[12] * e[1] * e[7] - e[12] * e[3] * e[5]
+            ),
+            invDet * (
+                -e[0] * e[5] * e[11] + e[0] * e[7] * e[9] + e[4] * e[1] * e[11] - e[4] * e[3] * e[9] - e[8] * e[1] * e[7] + e[8] * e[3] * e[5]
+            ),
+            invDet * (
+                -e[4] * e[9] * e[14] + e[4] * e[10] * e[13] + e[8] * e[5] * e[14] - e[8] * e[6] * e[13] - e[12] * e[5] * e[10] + e[12] * e[6] * e[9]
+            ),
+            invDet * (
+                e[0] * e[9] * e[14] - e[0] * e[10] * e[13] - e[8] * e[1] * e[14] + e[8] * e[2] * e[13] + e[12] * e[1] * e[10] - e[12] * e[2] * e[9]
+            ),
+            invDet * (
+                -e[0] * e[5] * e[14] + e[0] * e[6] * e[13] + e[4] * e[1] * e[14] - e[4] * e[2] * e[13] - e[12] * e[1] * e[6] + e[12] * e[2] * e[5]
+            ),
+            invDet * (
+                e[0] * e[5] * e[10] - e[0] * e[6] * e[9] - e[4] * e[1] * e[10] + e[4] * e[2] * e[9] + e[8] * e[1] * e[6] - e[8] * e[2] * e[5]
+            ),
+        );
+    }
+
+    static Compose(position: Vector3, rotation: Quaternion, scale: Vector3): Matrix4 {
+        const x = rotation.x,
+            y = rotation.y,
+            z = rotation.z,
+            w = rotation.w;
+        const x2 = x + x,
+            y2 = y + y,
+            z2 = z + z;
+        const xx = x * x2,
+            xy = x * y2,
+            xz = x * z2;
+        const yy = y * y2,
+            yz = y * z2,
+            zz = z * z2;
+        const wx = w * x2,
+            wy = w * y2,
+            wz = w * z2;
+        const sx = scale.x,
+            sy = scale.y,
+            sz = scale.z;
+        // prettier-ignore
+        return new Matrix4(
+            (1 - (yy + zz)) * sx, (xy + wz) * sx, (xz - wy) * sx, 0,
+            (xy - wz) * sy, (1 - (xx + zz)) * sy, (yz + wx) * sy, 0,
+            (xz + wy) * sz, (yz - wx) * sz, (1 - (xx + yy)) * sz, 0,
+            position.x, position.y, position.z, 1
+        );
+    }
+
+    toString(): string {
+        return `[${this.buffer.join(", ")}]`;
     }
 }
 

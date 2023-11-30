@@ -1,6 +1,8 @@
 import { Scene } from "../core/Scene";
 import { Vector3 } from "../math/Vector3";
 import { Quaternion } from "../math/Quaternion";
+import { SplatData } from "../splats/SplatData";
+import { Splat } from "../splats/Splat";
 
 class PLYLoader {
     static SH_C0 = 0.28209479177387814;
@@ -11,7 +13,7 @@ class PLYLoader {
         onProgress?: (progress: number) => void,
         format: string = "",
         useCache: boolean = false,
-    ): Promise<void> {
+    ): Promise<Splat> {
         const req = await fetch(url, {
             mode: "cors",
             credentials: "omit",
@@ -43,8 +45,11 @@ class PLYLoader {
             throw new Error("Invalid PLY file");
         }
 
-        const data = new Uint8Array(this._ParsePLYBuffer(plyData.buffer, format));
-        scene.setData(data);
+        const buffer = new Uint8Array(this._ParsePLYBuffer(plyData.buffer, format));
+        const data = SplatData.Deserialize(buffer);
+        const splat = new Splat(data);
+        scene.addObject(splat);
+        return splat;
     }
 
     static async LoadFromFileAsync(
@@ -52,11 +57,14 @@ class PLYLoader {
         scene: Scene,
         onProgress?: (progress: number) => void,
         format: string = "",
-    ): Promise<void> {
+    ): Promise<Splat> {
         const reader = new FileReader();
+        let splat = new Splat();
         reader.onload = (e) => {
-            const data = new Uint8Array(this._ParsePLYBuffer(e.target!.result as ArrayBuffer, format));
-            scene.setData(data);
+            const buffer = new Uint8Array(this._ParsePLYBuffer(e.target!.result as ArrayBuffer, format));
+            const data = SplatData.Deserialize(buffer);
+            splat = new Splat(data);
+            scene.addObject(splat);
         };
         reader.onprogress = (e) => {
             onProgress?.(e.loaded / e.total);
@@ -67,6 +75,7 @@ class PLYLoader {
                 resolve();
             };
         });
+        return splat;
     }
 
     private static _ParsePLYBuffer(inputBuffer: ArrayBuffer, format: string): ArrayBuffer {
@@ -108,15 +117,15 @@ class PLYLoader {
         }
 
         const dataView = new DataView(inputBuffer, header_end_index + header_end.length);
-        const buffer = new ArrayBuffer(Scene.RowLength * vertexCount);
+        const buffer = new ArrayBuffer(SplatData.RowLength * vertexCount);
 
         const q_polycam = Quaternion.FromEuler(new Vector3(Math.PI / 2, 0, 0));
 
         for (let i = 0; i < vertexCount; i++) {
-            const position = new Float32Array(buffer, i * Scene.RowLength, 3);
-            const scale = new Float32Array(buffer, i * Scene.RowLength + 12, 3);
-            const rgba = new Uint8ClampedArray(buffer, i * Scene.RowLength + 24, 4);
-            const rot = new Uint8ClampedArray(buffer, i * Scene.RowLength + 28, 4);
+            const position = new Float32Array(buffer, i * SplatData.RowLength, 3);
+            const scale = new Float32Array(buffer, i * SplatData.RowLength + 12, 3);
+            const rgba = new Uint8ClampedArray(buffer, i * SplatData.RowLength + 24, 4);
+            const rot = new Uint8ClampedArray(buffer, i * SplatData.RowLength + 28, 4);
 
             let r0: number = 255;
             let r1: number = 0;

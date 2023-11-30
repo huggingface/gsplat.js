@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="stylesheet" href="style.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>gsplat.js - Editor Demo</title>
+    </head>
+    <body>
+        <div id="progress-container">
+            <dialog open id="progress-dialog">
+                <p>
+                    <label for="progress-indicator">Loading scene...</label>
+                </p>
+                <progress max="100" id="progress-indicator"></progress>
+            </dialog>
+        </div>
+
+        <button id="download-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32">
+                <path
+                    fill="#ddd"
+                    d="M26 24v4H6v-4H4v4a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2v-4zm0-10l-1.41-1.41L17 20.17V2h-2v18.17l-7.59-7.58L6 14l10 10z"
+                />
+            </svg>
+        </button>
+
+        <canvas id="canvas"> </canvas>
+        <script type="module" src="/src/main.ts"></script>
+    </body>
+</html>

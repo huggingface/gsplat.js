@@ -1,40 +1,50 @@
-import { WebGLRenderer } from "../../WebGLRenderer";
+import { RenderProgram } from "../programs/RenderProgram";
+import { ShaderProgram } from "../programs/ShaderProgram";
 import { ShaderPass } from "./ShaderPass";
 
 class FadeInPass implements ShaderPass {
-    init: (renderer: WebGLRenderer, program: WebGLProgram) => void;
+    initialize: (program: ShaderProgram) => void;
     render: () => void;
 
     constructor(speed: number = 1.0) {
         let value = 0.0;
         let active = false;
 
-        let activeRenderer: WebGLRenderer;
+        let renderProgram: RenderProgram;
+        let gl: WebGL2RenderingContext;
         let u_useDepthFade: WebGLUniformLocation;
         let u_depthFade: WebGLUniformLocation;
 
-        this.init = (renderer: WebGLRenderer, program: WebGLProgram) => {
-            value = 0;
+        this.initialize = (program: ShaderProgram) => {
+            if (!(program instanceof RenderProgram)) {
+                throw new Error("FadeInPass requires a RenderProgram");
+            }
+
+            value = program.started ? 1.0 : 0.0;
             active = true;
-            activeRenderer = renderer;
+            renderProgram = program;
+            gl = program.renderer.gl;
 
-            u_useDepthFade = renderer.gl.getUniformLocation(program, "u_useDepthFade") as WebGLUniformLocation;
-            activeRenderer.gl.uniform1i(u_useDepthFade, 1);
+            u_useDepthFade = gl.getUniformLocation(renderProgram.program, "useDepthFade") as WebGLUniformLocation;
+            gl.uniform1i(u_useDepthFade, 1);
 
-            u_depthFade = renderer.gl.getUniformLocation(program, "u_depthFade") as WebGLUniformLocation;
-            activeRenderer.gl.uniform1f(u_depthFade, value);
+            u_depthFade = gl.getUniformLocation(renderProgram.program, "depthFade") as WebGLUniformLocation;
+            gl.uniform1f(u_depthFade, value);
         };
 
         this.render = () => {
-            if (!active) return;
+            if (!active || renderProgram.renderData?.updating) return;
+            gl.useProgram(renderProgram.program);
             value = Math.min(value + speed * 0.01, 1.0);
             if (value >= 1.0) {
                 active = false;
-                activeRenderer.gl.uniform1i(u_useDepthFade, 0);
+                gl.uniform1i(u_useDepthFade, 0);
             }
-            activeRenderer.gl.uniform1f(u_depthFade, value);
+            gl.uniform1f(u_depthFade, value);
         };
     }
+
+    dispose() {}
 }
 
 export { FadeInPass };
