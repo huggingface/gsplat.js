@@ -1,4 +1,3 @@
-import { Scene } from "../../../core/Scene";
 import { Matrix4 } from "../../../math/Matrix4";
 import loadWasm from "../../../wasm/wasm";
 
@@ -9,7 +8,7 @@ async function initWasm() {
     wasmModule = await loadWasm();
 }
 
-let scene: Scene;
+let sortData: { positions: Float32Array; vertexCount: number };
 let viewProj: Matrix4;
 let sortRunning = false;
 
@@ -23,21 +22,29 @@ let countsPtr: number;
 const initScene = async () => {
     if (!wasmModule) await initWasm();
 
-    fBufferPtr = wasmModule._malloc(scene.positions.length * scene.positions.BYTES_PER_ELEMENT);
-    wasmModule.HEAPF32.set(scene.positions, fBufferPtr / 4);
+    fBufferPtr = wasmModule._malloc(sortData.positions.length * sortData.positions.BYTES_PER_ELEMENT);
+    wasmModule.HEAPF32.set(sortData.positions, fBufferPtr / 4);
 
     viewProjPtr = wasmModule._malloc(16 * 4);
-    depthBufferPtr = wasmModule._malloc(scene.vertexCount * 4);
-    depthIndexPtr = wasmModule._malloc(scene.vertexCount * 4);
-    startsPtr = wasmModule._malloc(scene.vertexCount * 4);
-    countsPtr = wasmModule._malloc(scene.vertexCount * 4);
+    depthBufferPtr = wasmModule._malloc(sortData.vertexCount * 4);
+    depthIndexPtr = wasmModule._malloc(sortData.vertexCount * 4);
+    startsPtr = wasmModule._malloc(sortData.vertexCount * 4);
+    countsPtr = wasmModule._malloc(sortData.vertexCount * 4);
 };
 
 const runSort = (viewProj: Matrix4) => {
     const viewProjBuffer = new Float32Array(viewProj.buffer);
     wasmModule.HEAPF32.set(viewProjBuffer, viewProjPtr / 4);
-    wasmModule._sort(viewProjPtr, scene.vertexCount, fBufferPtr, depthBufferPtr, depthIndexPtr, startsPtr, countsPtr);
-    const depthIndex = new Uint32Array(wasmModule.HEAPU32.buffer, depthIndexPtr, scene.vertexCount);
+    wasmModule._sort(
+        viewProjPtr,
+        sortData.vertexCount,
+        fBufferPtr,
+        depthBufferPtr,
+        depthIndexPtr,
+        startsPtr,
+        countsPtr,
+    );
+    const depthIndex = new Uint32Array(wasmModule.HEAPU32.buffer, depthIndexPtr, sortData.vertexCount);
     const transferableDepthIndex = new Uint32Array(depthIndex.slice());
     self.postMessage({ depthIndex: transferableDepthIndex }, [transferableDepthIndex.buffer]);
 };
@@ -57,11 +64,11 @@ const throttledSort = () => {
 };
 
 self.onmessage = (e) => {
-    if (e.data.scene) {
-        scene = e.data.scene;
+    if (e.data.sortData) {
+        sortData = e.data.sortData;
         initScene();
     }
-    if (!scene || !wasmModule) return;
+    if (!sortData || !wasmModule) return;
     if (e.data.viewProj) {
         viewProj = e.data.viewProj;
         throttledSort();
