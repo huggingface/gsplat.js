@@ -91,11 +91,11 @@ export class WebGLRenderer {
 
         const initWebGL = () => {
             worker = new SortWorker();
-            const serializedScene = {
+            const sortData = {
                 positions: activeScene.positions,
                 vertexCount: activeScene.vertexCount,
             };
-            worker.postMessage({ scene: serializedScene });
+            worker.postMessage({ sortData: sortData });
 
             gl.viewport(0, 0, canvas.width, canvas.height);
 
