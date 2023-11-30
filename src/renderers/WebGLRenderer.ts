@@ -7,6 +7,7 @@ import { vertex } from "./webgl/shaders/vertex.glsl";
 import { frag } from "./webgl/shaders/frag.glsl";
 import { ShaderPass } from "./webgl/passes/ShaderPass";
 import { FadeInPass } from "./webgl/passes/FadeInPass";
+import { RenderData } from "./webgl/utils/RenderData";
 
 export class WebGLRenderer {
     domElement: HTMLCanvasElement;
@@ -163,6 +164,8 @@ export class WebGLRenderer {
             gl.vertexAttribIPointer(indexAttribute, 1, gl.INT, 0, 0);
             gl.vertexAttribDivisor(indexAttribute, 1);
 
+            const renderData = new RenderData(activeScene);
+
             gl.bindTexture(gl.TEXTURE_2D, texture);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -172,12 +175,12 @@ export class WebGLRenderer {
                 gl.TEXTURE_2D,
                 0,
                 gl.RGBA32UI,
-                activeScene.width,
-                activeScene.height,
+                renderData.width,
+                renderData.height,
                 0,
                 gl.RGBA_INTEGER,
                 gl.UNSIGNED_INT,
-                activeScene.data,
+                renderData.buffer,
             );
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, texture);
