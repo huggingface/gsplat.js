@@ -1,10 +1,16 @@
 import type { Scene } from "../core/Scene";
 
 class Loader {
-    static async LoadAsync(url: string, scene: Scene, onProgress?: (progress: number) => void): Promise<void> {
+    static async LoadAsync(
+        url: string,
+        scene: Scene,
+        onProgress?: (progress: number) => void,
+        useCache: boolean = false,
+    ): Promise<void> {
         const req = await fetch(url, {
             mode: "cors",
             credentials: "omit",
+            cache: useCache ? "force-cache" : "default",
         });
 
         if (req.status != 200) {
