@@ -10,10 +10,12 @@ class PLYLoader {
         scene: Scene,
         onProgress?: (progress: number) => void,
         format: string = "",
+        useCache: boolean = false,
     ): Promise<void> {
         const req = await fetch(url, {
             mode: "cors",
             credentials: "omit",
+            cache: useCache ? "force-cache" : "default",
         });
 
         if (req.status != 200) {
