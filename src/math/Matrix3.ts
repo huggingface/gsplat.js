@@ -30,9 +30,9 @@ class Matrix3 {
         return true;
     }
 
-    multiply(m: Matrix3): Matrix3 {
+    multiply(v: Matrix3): Matrix3 {
         const a = this.buffer;
-        const b = m.buffer;
+        const b = v.buffer;
         return new Matrix3(
             b[0] * a[0] + b[3] * a[1] + b[6] * a[2],
             b[1] * a[0] + b[4] * a[1] + b[7] * a[2],
@@ -100,6 +100,10 @@ class Matrix3 {
         ];
 
         return new Matrix3(...rotationMatrix);
+    }
+
+    toString(): string {
+        return `[${this.buffer.join(", ")}]`;
     }
 }
 

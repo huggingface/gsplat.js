@@ -3,12 +3,11 @@ interface WasmModule {
     _free(ptr: number): void;
     _sort(
         viewProj: number,
+        transforms: number,
+        transformIndices: number,
         vertexCount: number,
-        fBuffer: number,
-        center: number,
-        color: number,
-        covA: number,
-        covB: number,
+        positions: number,
+        chunks: number,
         depthBuffer: number,
         depthIndex: number,
         starts: number,

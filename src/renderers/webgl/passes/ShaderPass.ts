@@ -1,10 +1,10 @@
-import { WebGLRenderer } from "../../WebGLRenderer";
+import { ShaderProgram } from "../programs/ShaderProgram";
 
 class ShaderPass {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    init(renderer: WebGLRenderer, program: WebGLProgram) {}
-
+    initialize(program: ShaderProgram) {}
     render() {}
+    dispose() {}
 }
 
 export { ShaderPass };

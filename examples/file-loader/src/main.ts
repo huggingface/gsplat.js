@@ -3,7 +3,7 @@ import * as SPLAT from "gsplat";
 const renderer = new SPLAT.WebGLRenderer();
 const scene = new SPLAT.Scene();
 const camera = new SPLAT.Camera();
-const controls = new SPLAT.OrbitControls(camera, renderer.domElement);
+const controls = new SPLAT.OrbitControls(camera, renderer.canvas);
 
 let loading = false;
 
@@ -51,6 +51,7 @@ async function main() {
         e.stopPropagation();
 
         if (e.dataTransfer != null) {
+            scene.reset();
             selectFile(e.dataTransfer.files[0]);
         }
     });

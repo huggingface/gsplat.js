@@ -13,18 +13,19 @@ async function main() {
     // Load the scene
     const name = "bonsai";
     const url = `https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/${name}/${name}-7k.splat`;
-    await SPLAT.Loader.LoadAsync(url, scene, (progress) => (progressIndicator.value = progress * 100));
+    const splat = await SPLAT.Loader.LoadAsync(url, scene, (progress) => (progressIndicator.value = progress * 100));
     progressDialog.close();
 
     // Transform it
     const rotation = new SPLAT.Vector3(0, 0, 0);
     const translation = new SPLAT.Vector3(-0.2, 0.2, 0);
     const scaling = new SPLAT.Vector3(1.5, 1.5, 1.5);
-    const limitSize = 3.0;
-    scene.rotate(SPLAT.Quaternion.FromEuler(rotation));
-    scene.translate(translation);
-    scene.scale(scaling);
-    scene.limitBox(-limitSize, limitSize, -limitSize, limitSize, -limitSize, limitSize);
+    splat.rotation = SPLAT.Quaternion.FromEuler(rotation);
+    splat.position = translation;
+    splat.scale = scaling;
+    splat.applyPosition();
+    splat.applyRotation();
+    splat.applyScale();
 
     const handleResize = () => {
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -39,9 +40,11 @@ async function main() {
 
     const onKeyDown = (e: KeyboardEvent) => {
         if (e.key === "PageUp") {
-            scene.scale(new SPLAT.Vector3(1.1, 1.1, 1.1));
+            splat.scale = new SPLAT.Vector3(1.1, 1.1, 1.1);
+            splat.applyScale();
         } else if (e.key === "PageDown") {
-            scene.scale(new SPLAT.Vector3(0.9, 0.9, 0.9));
+            splat.scale = new SPLAT.Vector3(0.9, 0.9, 0.9);
+            splat.applyScale();
         }
     };
 
