@@ -7,7 +7,9 @@ class Controls {
         this._inputHandlers = inputHandlers;
 
         window.addEventListener("keydown", this.handleInput.bind(this));
+        canvas.addEventListener("mousedown", this.handleInput.bind(this));
         canvas.addEventListener("mousemove", this.handleInput.bind(this));
+        canvas.addEventListener("mouseup", this.handleInput.bind(this));
         canvas.addEventListener("click", this.handleInput.bind(this));
         canvas.addEventListener("contextmenu", this.handleInput.bind(this));
     }

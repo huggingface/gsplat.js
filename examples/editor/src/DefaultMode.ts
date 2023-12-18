@@ -1,3 +1,4 @@
+import * as SPLAT from "gsplat";
 import { UndoManager } from "./UndoManager";
 import { ModeManager } from "./ModeManager";
 import { SelectionManager } from "./SelectionManager";
@@ -43,8 +44,15 @@ class DefaultMode implements InputMode {
             }
         };
 
-        const handleClick = () => {
+        let mouseDownPosition: SPLAT.Vector3;
+        const handleMouseDown = () => {
+            mouseDownPosition = engine.mouseManager.currentMousePosition;
+        };
+
+        const handleMouseUp = () => {
             const mousePosition = engine.mouseManager.currentMousePosition;
+            const distance = mousePosition.distanceTo(mouseDownPosition);
+            if (distance > 0.01) return;
             const result = engine.intersectionTester.testPoint(mousePosition.x, mousePosition.y);
             if (result !== null) {
                 SelectionManager.selectedSplat = result;
@@ -59,7 +67,8 @@ class DefaultMode implements InputMode {
         engine.keyboardManager.registerKey("x", handleDelete);
         engine.keyboardManager.registerKey("z", handleUndo);
         engine.keyboardManager.registerKey("a", handleClearSelection);
-        engine.mouseManager.registerMouse("click", handleClick);
+        engine.mouseManager.registerMouse("mousedown", handleMouseDown);
+        engine.mouseManager.registerMouse("mouseup", handleMouseUp);
         engine.orbitControls.enabled = true;
 
         this.exit = () => {
@@ -69,7 +78,8 @@ class DefaultMode implements InputMode {
             engine.keyboardManager.unregisterKey("x");
             engine.keyboardManager.unregisterKey("z");
             engine.keyboardManager.unregisterKey("a");
-            engine.mouseManager.unregisterMouse("click");
+            engine.mouseManager.unregisterMouse("mousedown");
+            engine.mouseManager.unregisterMouse("mouseup");
             engine.orbitControls.enabled = false;
         };
     }
