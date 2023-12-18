@@ -7,6 +7,7 @@ gsplat.js is an easy-to-use, general-purpose, open-source 3D Gaussian Splatting 
 ### Quick Start
 
 -   **Live Viewer Demo:** Explore this library in action in the 🤗 [Hugging Face demo](https://huggingface.co/spaces/dylanebert/igf). Note: May not work on all devices; use `Bonsai` for the lowest memory requirements.
+-   **Editor Demo:** Try new real-time updates and editing features in the [gsplat.js editor](https://huggingface.co/spaces/dylanebert/gsplat-editor).
 -   **Code Example:** Start coding immediately with this [jsfiddle example](https://jsfiddle.net/wdn6vasc/).
 
 ### Installation
