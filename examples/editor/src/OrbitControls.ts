@@ -21,7 +21,7 @@ class OrbitControls {
         alpha: number = 0.5,
         beta: number = 0.5,
         radius: number = 13,
-        inputTarget: SPLAT.Vector3 = new SPLAT.Vector3()
+        inputTarget: SPLAT.Vector3 = new SPLAT.Vector3(),
     ) {
         let target = inputTarget.clone();
 
@@ -120,7 +120,7 @@ class OrbitControls {
                 desiredBeta += dy * this.orbitSpeed * 0.003;
                 desiredBeta = Math.min(
                     Math.max(desiredBeta, (this.minAngle * Math.PI) / 180),
-                    (this.maxAngle * Math.PI) / 180
+                    (this.maxAngle * Math.PI) / 180,
                 );
             }
 
@@ -202,7 +202,7 @@ class OrbitControls {
                 desiredBeta += dy * this.orbitSpeed * 0.003;
                 desiredBeta = Math.min(
                     Math.max(desiredBeta, (this.minAngle * Math.PI) / 180),
-                    (this.maxAngle * Math.PI) / 180
+                    (this.maxAngle * Math.PI) / 180,
                 );
 
                 lastX = e.touches[0].clientX;
