@@ -6,10 +6,10 @@ class OrbitControls {
     minAngle: number = -90;
     maxAngle: number = 90;
     minZoom: number = 0.1;
-    maxZoom: number = 30;
+    maxZoom: number = 50;
     orbitSpeed: number = 1.75;
     panSpeed: number = 1.25;
-    zoomSpeed: number = 1.75;
+    zoomSpeed: number = 2;
     dampening: number = 0.5;
     setCameraTarget: (newTarget: SPLAT.Vector3) => void = () => {};
     update: () => void;
@@ -20,8 +20,8 @@ class OrbitControls {
         canvas: HTMLElement,
         alpha: number = 0.5,
         beta: number = 0.5,
-        radius: number = 5,
-        inputTarget: SPLAT.Vector3 = new SPLAT.Vector3(),
+        radius: number = 13,
+        inputTarget: SPLAT.Vector3 = new SPLAT.Vector3()
     ) {
         let target = inputTarget.clone();
 
@@ -78,16 +78,24 @@ class OrbitControls {
                 panning = e.shiftKey;
                 lastX = e.clientX;
                 lastY = e.clientY;
+            } else if (e.altKey && e.button === 0) {
+                dragging = true;
+                panning = false;
+                lastX = e.clientX;
+                lastY = e.clientY;
+            } else if (e.altKey && e.button === 2) {
+                dragging = true;
+                panning = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
             }
         };
 
         const onMouseUp = (e: MouseEvent) => {
             preventDefault(e);
 
-            if (e.button === 1) {
-                dragging = false;
-                panning = false;
-            }
+            dragging = false;
+            panning = false;
         };
 
         const onMouseMove = (e: MouseEvent) => {
@@ -112,7 +120,7 @@ class OrbitControls {
                 desiredBeta += dy * this.orbitSpeed * 0.003;
                 desiredBeta = Math.min(
                     Math.max(desiredBeta, (this.minAngle * Math.PI) / 180),
-                    (this.maxAngle * Math.PI) / 180,
+                    (this.maxAngle * Math.PI) / 180
                 );
             }
 
@@ -194,7 +202,7 @@ class OrbitControls {
                 desiredBeta += dy * this.orbitSpeed * 0.003;
                 desiredBeta = Math.min(
                     Math.max(desiredBeta, (this.minAngle * Math.PI) / 180),
-                    (this.maxAngle * Math.PI) / 180,
+                    (this.maxAngle * Math.PI) / 180
                 );
 
                 lastX = e.touches[0].clientX;
