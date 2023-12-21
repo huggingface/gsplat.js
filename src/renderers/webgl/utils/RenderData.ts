@@ -1,6 +1,7 @@
 import { Scene } from "../../../core/Scene";
 import { Splat } from "../../../splats/Splat";
 import DataWorker from "web-worker:./DataWorker.ts";
+import loadWasm from "../../../wasm/data";
 
 class RenderData {
     public dataChanged = false;
@@ -109,18 +110,103 @@ class RenderData {
             }
         };
 
-        const build = (splat: Splat, force: boolean = false) => {
-            if (
-                force ||
-                splat.positionChanged ||
-                splat.rotationChanged ||
-                splat.scaleChanged ||
-                splat.selectedChanged
-            ) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let wasmModule: any;
+
+        async function initWasm() {
+            wasmModule = await loadWasm();
+        }
+
+        initWasm();
+
+        async function waitForWasm() {
+            while (!wasmModule) {
+                await new Promise((resolve) => setTimeout(resolve, 0));
+            }
+        }
+
+        const buildImmediate = (splat: Splat) => {
+            if (!wasmModule) {
+                waitForWasm().then(() => {
+                    buildImmediate(splat);
+                });
+                return;
+            }
+
+            updateTransform(splat);
+
+            const positionsPtr = wasmModule._malloc(3 * splat.data.vertexCount * 4);
+            const rotationsPtr = wasmModule._malloc(4 * splat.data.vertexCount * 4);
+            const scalesPtr = wasmModule._malloc(3 * splat.data.vertexCount * 4);
+            const colorsPtr = wasmModule._malloc(4 * splat.data.vertexCount);
+            const selectionPtr = wasmModule._malloc(splat.data.vertexCount);
+            const dataPtr = wasmModule._malloc(8 * splat.data.vertexCount * 4);
+            const worldPositionsPtr = wasmModule._malloc(3 * splat.data.vertexCount * 4);
+            const worldRotationsPtr = wasmModule._malloc(4 * splat.data.vertexCount * 4);
+            const worldScalesPtr = wasmModule._malloc(3 * splat.data.vertexCount * 4);
+
+            wasmModule.HEAPF32.set(splat.data.positions, positionsPtr / 4);
+            wasmModule.HEAPF32.set(splat.data.rotations, rotationsPtr / 4);
+            wasmModule.HEAPF32.set(splat.data.scales, scalesPtr / 4);
+            wasmModule.HEAPU8.set(splat.data.colors, colorsPtr);
+            wasmModule.HEAPU8.set(splat.data.selection, selectionPtr);
+
+            wasmModule._pack(
+                splat.selected,
+                splat.data.vertexCount,
+                positionsPtr,
+                rotationsPtr,
+                scalesPtr,
+                colorsPtr,
+                selectionPtr,
+                dataPtr,
+                worldPositionsPtr,
+                worldRotationsPtr,
+                worldScalesPtr,
+            );
+
+            const outData = new Uint32Array(wasmModule.HEAPU32.buffer, dataPtr, splat.data.vertexCount * 8);
+            const worldPositions = new Float32Array(
+                wasmModule.HEAPF32.buffer,
+                worldPositionsPtr,
+                splat.data.vertexCount * 3,
+            );
+            const worldRotations = new Float32Array(
+                wasmModule.HEAPF32.buffer,
+                worldRotationsPtr,
+                splat.data.vertexCount * 4,
+            );
+            const worldScales = new Float32Array(wasmModule.HEAPF32.buffer, worldScalesPtr, splat.data.vertexCount * 3);
+
+            const splatIndex = this._splatIndices.get(splat) as number;
+            const offset = this._offsets.get(splat) as number;
+            for (let i = 0; i < splat.data.vertexCount; i++) {
+                this._transformIndices[offset + i] = splatIndex;
+            }
+            this._data.set(outData, offset * 8);
+            this._positions.set(worldPositions, offset * 3);
+            this._rotations.set(worldRotations, offset * 4);
+            this._scales.set(worldScales, offset * 3);
+
+            wasmModule._free(positionsPtr);
+            wasmModule._free(rotationsPtr);
+            wasmModule._free(scalesPtr);
+            wasmModule._free(colorsPtr);
+            wasmModule._free(selectionPtr);
+            wasmModule._free(dataPtr);
+            wasmModule._free(worldPositionsPtr);
+            wasmModule._free(worldRotationsPtr);
+            wasmModule._free(worldScalesPtr);
+
+            this.dataChanged = true;
+        };
+
+        const build = (splat: Splat) => {
+            if (splat.positionChanged || splat.rotationChanged || splat.scaleChanged || splat.selectedChanged) {
                 updateTransform(splat);
             }
 
-            if (!force && (!splat.data.changed || splat.data.detached)) return;
+            if (!splat.data.changed || splat.data.detached) return;
 
             const serializedSplat = {
                 position: new Float32Array(splat.position.flat()),
@@ -191,7 +277,7 @@ class RenderData {
         };
 
         for (const splat of this._splatIndices.keys()) {
-            build(splat, true);
+            buildImmediate(splat);
         }
     }
 
