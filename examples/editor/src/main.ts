@@ -15,6 +15,7 @@ const fileInput = document.getElementById("file-input") as HTMLInputElement;
 const urlInput = document.getElementById("url-input") as HTMLInputElement;
 const uploadSubmit = document.getElementById("upload-submit") as HTMLButtonElement;
 const uploadError = document.getElementById("upload-error") as HTMLDivElement;
+const learnMoreButton = document.getElementById("about") as HTMLButtonElement;
 
 const engine = new Engine(canvas);
 
@@ -41,7 +42,7 @@ async function selectFile(file: File) {
             (progress: number) => {
                 progressIndicator.value = progress * 100;
             },
-            format,
+            format
         );
         progressDialog.close();
     } else {
@@ -124,7 +125,7 @@ async function main() {
             await SPLAT.PLYLoader.LoadAsync(
                 url,
                 engine.scene,
-                (progress) => (progressIndicator.value = progress * 100),
+                (progress) => (progressIndicator.value = progress * 100)
             );
             progressDialog.close();
         } else {
@@ -132,6 +133,10 @@ async function main() {
             uploadError.innerText = `Invalid file type: ${url}`;
             return;
         }
+    });
+
+    learnMoreButton.addEventListener("click", () => {
+        window.open("https://huggingface.co/spaces/dylanebert/gsplat-editor/discussions/1", "_blank");
     });
 
     window.addEventListener("click", () => {

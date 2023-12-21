@@ -150,6 +150,7 @@ progress::-moz-progress-bar {
     padding: 16px;
     border: 1px solid #888;
     width: 80%;
+    max-width: 960px;
     color: #ddd;
 }
 
@@ -225,4 +226,11 @@ input[type="file"] {
 #upload-error {
     display: none;
     color: #f00;
+}
+
+#about {
+    margin: 8px 0;
+    text-decoration: underline;
+    cursor: pointer;
+    pointer-events: auto;
 }
