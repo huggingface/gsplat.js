@@ -30,7 +30,7 @@ let positionsPtr: number;
 let rotationsPtr: number;
 let scalesPtr: number;
 let colorsPtr: number;
-let selection: number;
+let selectionPtr: number;
 let dataPtr: number;
 let worldPositionsPtr: number;
 let worldRotationsPtr: number;
@@ -54,7 +54,7 @@ const pack = async (splat: Splat) => {
             wasmModule._free(rotationsPtr);
             wasmModule._free(scalesPtr);
             wasmModule._free(colorsPtr);
-            wasmModule._free(selection);
+            wasmModule._free(selectionPtr);
             wasmModule._free(dataPtr);
             wasmModule._free(worldPositionsPtr);
             wasmModule._free(worldRotationsPtr);
@@ -67,7 +67,7 @@ const pack = async (splat: Splat) => {
         rotationsPtr = wasmModule._malloc(4 * allocatedVertexCount * 4);
         scalesPtr = wasmModule._malloc(3 * allocatedVertexCount * 4);
         colorsPtr = wasmModule._malloc(4 * allocatedVertexCount);
-        selection = wasmModule._malloc(allocatedVertexCount);
+        selectionPtr = wasmModule._malloc(allocatedVertexCount);
         dataPtr = wasmModule._malloc(8 * allocatedVertexCount * 4);
         worldPositionsPtr = wasmModule._malloc(3 * allocatedVertexCount * 4);
         worldRotationsPtr = wasmModule._malloc(4 * allocatedVertexCount * 4);
@@ -78,7 +78,7 @@ const pack = async (splat: Splat) => {
     wasmModule.HEAPF32.set(splat.rotations, rotationsPtr / 4);
     wasmModule.HEAPF32.set(splat.scales, scalesPtr / 4);
     wasmModule.HEAPU8.set(splat.colors, colorsPtr);
-    wasmModule.HEAPU8.set(splat.selection, selection);
+    wasmModule.HEAPU8.set(splat.selection, selectionPtr);
 
     wasmModule._pack(
         splat.selected,
@@ -87,7 +87,7 @@ const pack = async (splat: Splat) => {
         rotationsPtr,
         scalesPtr,
         colorsPtr,
-        selection,
+        selectionPtr,
         dataPtr,
         worldPositionsPtr,
         worldRotationsPtr,
