@@ -66,8 +66,7 @@ const allocateBuffers = async () => {
         countsPtr = wasmModule._malloc(allocatedVertexCount * 4);
     }
 
-    const targetAllocatedTransformCount = Math.pow(2, Math.ceil(Math.log2(sortData.transforms.length / 20)));
-    if (allocatedTransformCount < targetAllocatedTransformCount) {
+    if (allocatedTransformCount < sortData.transforms.length) {
         while (running) {
             await new Promise((resolve) => setTimeout(resolve, 0));
         }
@@ -76,20 +75,20 @@ const allocateBuffers = async () => {
             wasmModule._free(transformsPtr);
         }
 
-        allocatedTransformCount = targetAllocatedTransformCount;
+        allocatedTransformCount = sortData.transforms.length;
 
-        transformsPtr = wasmModule._malloc(20 * 4 * allocatedTransformCount);
+        transformsPtr = wasmModule._malloc(allocatedTransformCount * 4);
     }
-
-    wasmModule.HEAPF32.set(sortData.positions, positionsPtr / 4);
-    wasmModule.HEAPF32.set(sortData.transforms, transformsPtr / 4);
-    wasmModule.HEAPU32.set(sortData.transformIndices, transformIndicesPtr / 4);
 
     allocating = false;
 };
 
 const runSort = (viewProj: Matrix4) => {
+    wasmModule.HEAPF32.set(sortData.positions, positionsPtr / 4);
+    wasmModule.HEAPF32.set(sortData.transforms, transformsPtr / 4);
+    wasmModule.HEAPU32.set(sortData.transformIndices, transformIndicesPtr / 4);
     wasmModule.HEAPF32.set(viewProj.buffer, viewProjPtr / 4);
+
     wasmModule._sort(
         viewProjPtr,
         transformsPtr,

@@ -83,7 +83,7 @@ class IntersectionTester {
             }
 
             if (!renderProgram.renderData || !renderProgram.depthIndex || !renderProgram.chunks) {
-                throw new Error("Render data not set");
+                return null;
             }
 
             const renderData = renderProgram.renderData;
