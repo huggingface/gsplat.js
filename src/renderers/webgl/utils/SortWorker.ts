@@ -1,4 +1,3 @@
-import { Matrix4 } from "../../../math/Matrix4";
 import loadWasm from "../../../wasm/sort";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,7 +26,8 @@ let countsPtr: number;
 
 let allocatedVertexCount: number = 0;
 let allocatedTransformCount: number = 0;
-let viewProj: Matrix4;
+let viewProj: Float32Array = new Float32Array(16);
+let lastViewProj: Float32Array = new Float32Array(16);
 
 let running = false;
 let allocating = false;
@@ -39,10 +39,6 @@ const allocateBuffers = async () => {
 
     const targetAllocatedVertexCount = Math.pow(2, Math.ceil(Math.log2(sortData.vertexCount)));
     if (allocatedVertexCount < targetAllocatedVertexCount) {
-        while (running) {
-            await new Promise((resolve) => setTimeout(resolve, 0));
-        }
-
         if (allocatedVertexCount > 0) {
             wasmModule._free(viewProjPtr);
             wasmModule._free(transformIndicesPtr);
@@ -67,10 +63,6 @@ const allocateBuffers = async () => {
     }
 
     if (allocatedTransformCount < sortData.transforms.length) {
-        while (running) {
-            await new Promise((resolve) => setTimeout(resolve, 0));
-        }
-
         if (allocatedTransformCount > 0) {
             wasmModule._free(transformsPtr);
         }
@@ -81,13 +73,14 @@ const allocateBuffers = async () => {
     }
 
     allocating = false;
+    lastViewProj = new Float32Array(16);
 };
 
-const runSort = (viewProj: Matrix4) => {
+const runSort = () => {
     wasmModule.HEAPF32.set(sortData.positions, positionsPtr / 4);
     wasmModule.HEAPF32.set(sortData.transforms, transformsPtr / 4);
     wasmModule.HEAPU32.set(sortData.transformIndices, transformIndicesPtr / 4);
-    wasmModule.HEAPF32.set(viewProj.buffer, viewProjPtr / 4);
+    wasmModule.HEAPF32.set(viewProj, viewProjPtr / 4);
 
     wasmModule._sort(
         viewProjPtr,
@@ -114,16 +107,23 @@ const runSort = (viewProj: Matrix4) => {
     ]);
 };
 
+const isEqual = (a: Float32Array, b: Float32Array) => {
+    for (let i = 0; i < 16; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+};
+
 const throttledSort = () => {
     if (!running) {
         running = true;
-        const lastView = viewProj;
-        runSort(lastView);
+        if (wasmModule && !allocating && !isEqual(viewProj, lastViewProj)) {
+            lastViewProj = viewProj;
+            runSort();
+        }
         setTimeout(() => {
             running = false;
-            if (lastView !== viewProj) {
-                throttledSort();
-            }
+            throttledSort();
         }, 0);
     }
 };
@@ -133,7 +133,6 @@ self.onmessage = (e) => {
         sortData = e.data.sortData;
         allocateBuffers();
     }
-    if (allocating || !sortData) return;
     if (e.data.viewProj) {
         viewProj = e.data.viewProj;
         throttledSort();
