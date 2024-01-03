@@ -143,7 +143,7 @@ class RenderProgram extends ShaderProgram {
     private _outlineThickness: number = 10.0;
     private _outlineColor: Color32 = new Color32(255, 165, 0, 255);
     private _renderData: RenderData | null = null;
-    private _depthIndex: Uint32Array | null = null;
+    private _depthIndex: Uint32Array = new Uint32Array();
     private _chunks: Uint8Array | null = null;
     private _splatTexture: WebGLTexture | null = null;
 
@@ -301,9 +301,6 @@ class RenderProgram extends ShaderProgram {
                 return;
             }
 
-            this._camera.update();
-            worker.postMessage({ viewProj: this._camera.data.viewProj });
-
             if (this.renderData.needsRebuild) {
                 this.renderData.rebuild();
             }
@@ -386,6 +383,9 @@ class RenderProgram extends ShaderProgram {
                 this.renderData.transformsChanged = false;
             }
 
+            this._camera.update();
+            worker.postMessage({ viewProj: this._camera.data.viewProj.buffer });
+
             gl.viewport(0, 0, canvas.width, canvas.height);
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
@@ -402,6 +402,7 @@ class RenderProgram extends ShaderProgram {
             gl.vertexAttribPointer(positionAttribute, 2, gl.FLOAT, false, 0, 0);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, indexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, this.depthIndex, gl.STATIC_DRAW);
             gl.vertexAttribIPointer(indexAttribute, 1, gl.INT, 0, 0);
             gl.vertexAttribDivisor(indexAttribute, 1);
 

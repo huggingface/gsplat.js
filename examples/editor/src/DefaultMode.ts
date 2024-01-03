@@ -44,7 +44,7 @@ class DefaultMode implements InputMode {
             }
         };
 
-        let mouseDownPosition: SPLAT.Vector3;
+        let mouseDownPosition: SPLAT.Vector3 = new SPLAT.Vector3();
         const handleMouseDown = () => {
             mouseDownPosition = engine.mouseManager.currentMousePosition;
         };
