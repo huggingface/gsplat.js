@@ -3,7 +3,7 @@ import * as SPLAT from "gsplat";
 class SelectionManager {
     private static _instance: SelectionManager;
 
-    private static _selectedSplat: SPLAT.Splat | null;
+    private static _selectedSplat: SPLAT.Splat | null = null;
 
     public static get instance(): SelectionManager {
         if (!SelectionManager._instance) {
