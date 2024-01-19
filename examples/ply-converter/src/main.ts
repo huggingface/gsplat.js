@@ -20,6 +20,13 @@ async function main() {
     progressDialog.close();
     scene.saveToFile("bonsai.splat");
 
+    // Alternatively, uncomment below to convert from splat to ply
+    // NOTE: Data like SH coefficients will be lost when converting ply -> splat -> ply
+    /* const url = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bonsai/bonsai-7k-mini.splat";
+    await SPLAT.Loader.LoadAsync(url, scene, (progress) => (progressIndicator.value = progress * 100));
+    progressDialog.close();
+    scene.saveToFile("bonsai-7k-mini.ply", "ply"); */
+
     // Render loop
     const frame = () => {
         controls.update();
