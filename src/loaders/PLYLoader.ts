@@ -3,10 +3,9 @@ import { Vector3 } from "../math/Vector3";
 import { Quaternion } from "../math/Quaternion";
 import { SplatData } from "../splats/SplatData";
 import { Splat } from "../splats/Splat";
+import { Converter } from "../utils/Converter";
 
 class PLYLoader {
-    static SH_C0 = 0.28209479177387814;
-
     static async LoadAsync(
         url: string,
         scene: Scene,
@@ -174,16 +173,16 @@ class PLYLoader {
                         rgba[2] = value;
                         break;
                     case "f_dc_0":
-                        rgba[0] = (0.5 + this.SH_C0 * value) * 255;
+                        rgba[0] = (0.5 + Converter.SH_C0 * value) * 255;
                         break;
                     case "f_dc_1":
-                        rgba[1] = (0.5 + this.SH_C0 * value) * 255;
+                        rgba[1] = (0.5 + Converter.SH_C0 * value) * 255;
                         break;
                     case "f_dc_2":
-                        rgba[2] = (0.5 + this.SH_C0 * value) * 255;
+                        rgba[2] = (0.5 + Converter.SH_C0 * value) * 255;
                         break;
                     case "f_dc_3":
-                        rgba[3] = (0.5 + this.SH_C0 * value) * 255;
+                        rgba[3] = (0.5 + Converter.SH_C0 * value) * 255;
                         break;
                     case "opacity":
                         rgba[3] = (1 / (1 + Math.exp(-value))) * 255;

@@ -3,6 +3,7 @@ import { SplatData } from "../splats/SplatData";
 import { Splat } from "../splats/Splat";
 import { EventDispatcher } from "../events/EventDispatcher";
 import { ObjectAddedEvent, ObjectRemovedEvent } from "../events/Events";
+import { Converter } from "../utils/Converter";
 
 class Scene extends EventDispatcher {
     private _objects: Object3D[] = [];
@@ -58,12 +59,18 @@ class Scene extends EventDispatcher {
         this.reset();
     }
 
-    saveToFile(name: string | null = null) {
+    saveToFile(name: string | null = null, format: string | null = null) {
         if (!document) return;
+
+        if (!format) {
+            format = "splat";
+        } else if (format !== "splat" && format !== "ply") {
+            throw new Error("Invalid format. Must be 'splat' or 'ply'");
+        }
 
         if (!name) {
             const now = new Date();
-            name = `scene-${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}.splat`;
+            name = `scene-${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}.${format}`;
         }
 
         const buffers: Uint8Array[] = [];
@@ -87,7 +94,14 @@ class Scene extends EventDispatcher {
             offset += buffer.length;
         }
 
-        const blob = new Blob([data.buffer], { type: "application/octet-stream" });
+        let blob;
+        if (format === "ply") {
+            const plyData = Converter.SplatToPLY(data.buffer, vertexCount);
+            blob = new Blob([plyData], { type: "application/octet-stream" });
+        } else {
+            blob = new Blob([data.buffer], { type: "application/octet-stream" });
+        }
+
         const link = document.createElement("a");
         link.download = name;
         link.href = URL.createObjectURL(blob);

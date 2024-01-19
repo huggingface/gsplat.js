@@ -83,6 +83,14 @@ A: Yes, gsplat.js supports `.ply` files. See the [ply-converter example](https:/
 
 A: `.splat` files are a compact form of the splat data, offering quicker loading times than `.ply` files. They consist of a raw Uint8Array buffer.
 
+> ⚠️ The `.splat` format does not contain SH coefficients, so colors are not view-dependent.
+
+**Q: Can I convert .splat files to .ply?**
+
+A: Yes, see the commented code in the [ply-converter example](https://github.com/dylanebert/gsplat.js/blob/main/examples/ply-converter/src/main.ts). Alternatively, convert `.splat` to `.ply` from URL in this [jsfiddle example](https://jsfiddle.net/aL81ds3e/).
+
+> ⚠️ When converting `.ply` -> `.splat` -> `.ply`, SH coefficients will be lost.
+
 ### License
 
 This project is released under the MIT license. It is built upon several other open-source projects:

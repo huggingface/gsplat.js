@@ -2,6 +2,7 @@ import { SplatData } from "./SplatData";
 import { Object3D } from "../core/Object3D";
 import { Vector3 } from "../math/Vector3";
 import { Quaternion } from "../math/Quaternion";
+import { Converter } from "../utils/Converter";
 
 class Splat extends Object3D {
     public selectedChanged: boolean = false;
@@ -30,20 +31,33 @@ class Splat extends Object3D {
         };
     }
 
-    saveToFile(name: string | null = null) {
+    saveToFile(name: string | null = null, format: string | null = null) {
         if (!document) return;
+
+        if (!format) {
+            format = "splat";
+        } else if (format !== "splat" && format !== "ply") {
+            throw new Error("Invalid format. Must be 'splat' or 'ply'");
+        }
 
         if (!name) {
             const now = new Date();
-            name = `splat-${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}.splat`;
+            name = `splat-${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}.${format}`;
         }
 
         this.applyRotation();
         this.applyScale();
         this.applyPosition();
 
-        const buffer = this.data.serialize();
-        const blob = new Blob([buffer], { type: "application/octet-stream" });
+        const data = this.data.serialize();
+        let blob;
+        if (format === "ply") {
+            const plyData = Converter.SplatToPLY(data.buffer, this.data.vertexCount);
+            blob = new Blob([plyData], { type: "application/octet-stream" });
+        } else {
+            blob = new Blob([data.buffer], { type: "application/octet-stream" });
+        }
+
         const link = document.createElement("a");
         link.download = name;
         link.href = URL.createObjectURL(blob);
