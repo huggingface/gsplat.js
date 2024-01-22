@@ -27,13 +27,18 @@ let countsPtr: number;
 let allocatedVertexCount: number = 0;
 let allocatedTransformCount: number = 0;
 let viewProj: Float32Array = new Float32Array(16);
-let lastViewProj: Float32Array = new Float32Array(16);
 
-let running = false;
-let allocating = false;
+let lock = false;
+let allocationPending = false;
+let sorting = false;
 
 const allocateBuffers = async () => {
-    allocating = true;
+    if (lock) {
+        allocationPending = true;
+        return;
+    }
+    lock = true;
+    allocationPending = false;
 
     if (!wasmModule) await initWasm();
 
@@ -72,11 +77,17 @@ const allocateBuffers = async () => {
         transformsPtr = wasmModule._malloc(allocatedTransformCount * 4);
     }
 
-    allocating = false;
-    lastViewProj = new Float32Array(16);
+    lock = false;
+    if (allocationPending) {
+        allocationPending = false;
+        await allocateBuffers();
+    }
 };
 
 const runSort = () => {
+    if (lock || allocationPending || !wasmModule) return;
+    lock = true;
+
     wasmModule.HEAPF32.set(sortData.positions, positionsPtr / 4);
     wasmModule.HEAPF32.set(sortData.transforms, transformsPtr / 4);
     wasmModule.HEAPU32.set(sortData.transformIndices, transformIndicesPtr / 4);
@@ -105,36 +116,33 @@ const runSort = () => {
         detachedDepthIndex.buffer,
         detachedChunks.buffer,
     ]);
-};
 
-const isEqual = (a: Float32Array, b: Float32Array) => {
-    for (let i = 0; i < 16; i++) {
-        if (a[i] !== b[i]) return false;
-    }
-    return true;
+    lock = false;
 };
 
 const throttledSort = () => {
-    if (!running) {
-        running = true;
-        if (wasmModule && !allocating && !isEqual(viewProj, lastViewProj)) {
-            lastViewProj = viewProj;
-            runSort();
-        }
+    if (!sorting) {
+        sorting = true;
+        runSort();
         setTimeout(() => {
-            running = false;
+            sorting = false;
             throttledSort();
-        }, 0);
+        });
     }
 };
 
 self.onmessage = (e) => {
     if (e.data.sortData) {
-        sortData = e.data.sortData;
+        sortData = {
+            positions: Float32Array.from(e.data.sortData.positions),
+            transforms: Float32Array.from(e.data.sortData.transforms),
+            transformIndices: Uint32Array.from(e.data.sortData.transformIndices),
+            vertexCount: e.data.sortData.vertexCount,
+        };
         allocateBuffers();
     }
     if (e.data.viewProj) {
-        viewProj = e.data.viewProj;
+        viewProj = Float32Array.from(e.data.viewProj);
         throttledSort();
     }
 };
