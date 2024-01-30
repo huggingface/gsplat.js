@@ -4,6 +4,7 @@ import { Quaternion } from "../math/Quaternion";
 import { SplatData } from "../splats/SplatData";
 import { Splat } from "../splats/Splat";
 import { Converter } from "../utils/Converter";
+import { initiateFetchRequest, loadRequestDataIntoBuffer } from "../utils/LoaderUtils";
 
 class PLYLoader {
     static async LoadAsync(
@@ -13,32 +14,9 @@ class PLYLoader {
         format: string = "",
         useCache: boolean = false,
     ): Promise<Splat> {
-        const req = await fetch(url, {
-            mode: "cors",
-            credentials: "omit",
-            cache: useCache ? "force-cache" : "default",
-        });
+        const res: Response = await initiateFetchRequest(url, useCache);
 
-        if (req.status != 200) {
-            throw new Error(req.status + " Unable to load " + req.url);
-        }
-
-        const reader = req.body!.getReader();
-        const contentLength = parseInt(req.headers.get("content-length") as string);
-        const plyData = new Uint8Array(contentLength);
-
-        let bytesRead = 0;
-
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            plyData.set(value, bytesRead);
-            bytesRead += value.length;
-
-            onProgress?.(bytesRead / contentLength);
-        }
+        const plyData = await loadRequestDataIntoBuffer(res, onProgress);
 
         if (plyData[0] !== 112 || plyData[1] !== 108 || plyData[2] !== 121 || plyData[3] !== 10) {
             throw new Error("Invalid PLY file");
