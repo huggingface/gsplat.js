@@ -76,7 +76,7 @@ extern "C"
         }
 
         const uint32_t depthRange = 256 * 256;
-        const float depthInv = (float)depthRange / (maxDepth - minDepth);
+        const float depthInv = (float)(depthRange - 1) / (maxDepth - minDepth);
         memset(counts, 0, depthRange * sizeof(uint32_t));
         for (uint32_t i = 0; i < vertexCount; i++)
         {

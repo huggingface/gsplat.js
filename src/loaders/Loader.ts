@@ -1,6 +1,7 @@
 import type { Scene } from "../core/Scene";
 import { Splat } from "../splats/Splat";
 import { SplatData } from "../splats/SplatData";
+import { initiateFetchRequest, loadRequestDataIntoBuffer } from "../utils/LoaderUtils";
 
 class Loader {
     static async LoadAsync(
@@ -9,32 +10,9 @@ class Loader {
         onProgress?: (progress: number) => void,
         useCache: boolean = false,
     ): Promise<Splat> {
-        const req = await fetch(url, {
-            mode: "cors",
-            credentials: "omit",
-            cache: useCache ? "force-cache" : "default",
-        });
+        const res: Response = await initiateFetchRequest(url, useCache);
 
-        if (req.status != 200) {
-            throw new Error(req.status + " Unable to load " + req.url);
-        }
-
-        const reader = req.body!.getReader();
-        const contentLength = parseInt(req.headers.get("content-length") as string);
-        const buffer = new Uint8Array(contentLength);
-
-        let bytesRead = 0;
-
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer.set(value, bytesRead);
-            bytesRead += value.length;
-
-            onProgress?.(bytesRead / contentLength);
-        }
+        const buffer = await loadRequestDataIntoBuffer(res, onProgress);
 
         const data = SplatData.Deserialize(buffer);
         const splat = new Splat(data);
