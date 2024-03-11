@@ -22,11 +22,7 @@ class PLYLoader {
             throw new Error("Invalid PLY file");
         }
 
-        const buffer = new Uint8Array(this._ParsePLYBuffer(plyData.buffer, format));
-        const data = SplatData.Deserialize(buffer);
-        const splat = new Splat(data);
-        scene.addObject(splat);
-        return splat;
+        return this.LoadFromArrayBuffer(plyData.buffer, scene, format);
     }
 
     static async LoadFromFileAsync(
@@ -38,10 +34,7 @@ class PLYLoader {
         const reader = new FileReader();
         let splat = new Splat();
         reader.onload = (e) => {
-            const buffer = new Uint8Array(this._ParsePLYBuffer(e.target!.result as ArrayBuffer, format));
-            const data = SplatData.Deserialize(buffer);
-            splat = new Splat(data);
-            scene.addObject(splat);
+            splat = this.LoadFromArrayBuffer(e.target!.result as ArrayBuffer, scene, format);
         };
         reader.onprogress = (e) => {
             onProgress?.(e.loaded / e.total);
@@ -52,6 +45,14 @@ class PLYLoader {
                 resolve();
             };
         });
+        return splat;
+    }
+
+    static LoadFromArrayBuffer(arrayBuffer: ArrayBufferLike, scene: Scene, format: string = ""): Splat {
+        const buffer = new Uint8Array(this._ParsePLYBuffer(arrayBuffer, format));
+        const data = SplatData.Deserialize(buffer);
+        const splat = new Splat(data);
+        scene.addObject(splat);
         return splat;
     }
 

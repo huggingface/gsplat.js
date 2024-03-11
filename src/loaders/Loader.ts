@@ -13,21 +13,14 @@ class Loader {
         const res: Response = await initiateFetchRequest(url, useCache);
 
         const buffer = await loadRequestDataIntoBuffer(res, onProgress);
-
-        const data = SplatData.Deserialize(buffer);
-        const splat = new Splat(data);
-        scene.addObject(splat);
-        return splat;
+        return this.LoadFromArrayBuffer(buffer, scene);
     }
 
     static async LoadFromFileAsync(file: File, scene: Scene, onProgress?: (progress: number) => void): Promise<Splat> {
         const reader = new FileReader();
         let splat = new Splat();
         reader.onload = (e) => {
-            const buffer = new Uint8Array(e.target!.result as ArrayBuffer);
-            const data = SplatData.Deserialize(buffer);
-            splat = new Splat(data);
-            scene.addObject(splat);
+            splat = this.LoadFromArrayBuffer(e.target!.result as ArrayBuffer, scene);
         };
         reader.onprogress = (e) => {
             onProgress?.(e.loaded / e.total);
@@ -38,6 +31,14 @@ class Loader {
                 resolve();
             };
         });
+        return splat;
+    }
+
+    static LoadFromArrayBuffer(arrayBuffer: ArrayBufferLike, scene: Scene): Splat {
+        const buffer = new Uint8Array(arrayBuffer);
+        const data = SplatData.Deserialize(buffer);
+        const splat = new Splat(data);
+        scene.addObject(splat);
         return splat;
     }
 }
