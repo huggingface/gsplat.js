@@ -153,6 +153,22 @@ class Quaternion {
         return new Quaternion(axis.x * sin, axis.y * sin, axis.z * sin, cos);
     }
 
+    static LookRotation(direction: Vector3): Quaternion {
+        const forward = new Vector3(0, 0, 1);
+        const dot = forward.dot(direction);
+
+        if (Math.abs(dot - -1.0) < 0.000001) {
+            return new Quaternion(0, 1, 0, Math.PI);
+        }
+        if (Math.abs(dot - 1.0) < 0.000001) {
+            return new Quaternion();
+        }
+
+        const rotAngle = Math.acos(dot);
+        const rotAxis = forward.cross(direction).normalize();
+        return Quaternion.FromAxisAngle(rotAxis, rotAngle);
+    }
+
     toString(): string {
         return `[${this.flat().join(", ")}]`;
     }

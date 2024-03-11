@@ -3,12 +3,16 @@ import { Object3D } from "../core/Object3D";
 import { Vector3 } from "../math/Vector3";
 import { Quaternion } from "../math/Quaternion";
 import { Converter } from "../utils/Converter";
+import { Matrix4 } from "../math/Matrix4";
 
 class Splat extends Object3D {
     public selectedChanged: boolean = false;
+    public colorTransformChanged: boolean = false;
 
     private _data: SplatData;
     private _selected: boolean = false;
+    private _colorTransforms: Array<Matrix4> = [];
+    private _colorTransformsMap: Map<number, number> = new Map();
 
     constructor(splat: SplatData | undefined = undefined) {
         super();
@@ -78,6 +82,14 @@ class Splat extends Object3D {
             this.selectedChanged = true;
             this.dispatchEvent(this._changeEvent);
         }
+    }
+
+    get colorTransforms() {
+        return this._colorTransforms;
+    }
+
+    get colorTransformsMap() {
+        return this._colorTransformsMap;
     }
 }
 

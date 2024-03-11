@@ -20,6 +20,7 @@ abstract class Object3D extends EventDispatcher {
     applyPosition: () => void;
     applyRotation: () => void;
     applyScale: () => void;
+    raiseChangeEvent: () => void;
 
     constructor() {
         super();
@@ -36,6 +37,10 @@ abstract class Object3D extends EventDispatcher {
 
         this.applyScale = () => {
             this.scale = new Vector3(1, 1, 1);
+        };
+
+        this.raiseChangeEvent = () => {
+            this.dispatchEvent(this._changeEvent);
         };
     }
 
