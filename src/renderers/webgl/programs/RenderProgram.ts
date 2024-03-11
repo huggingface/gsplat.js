@@ -15,6 +15,8 @@ precision highp int;
 uniform highp usampler2D u_texture;
 uniform highp sampler2D u_transforms;
 uniform highp usampler2D u_transformIndices;
+uniform highp sampler2D u_colorTransforms;
+uniform highp usampler2D u_colorTransformIndices;
 uniform mat4 projection, view;
 uniform vec2 focal;
 uniform vec2 viewport;
@@ -79,7 +81,17 @@ void main () {
     vec2 majorAxis = min(sqrt(2.0 * lambda1), 1024.0) * diagonalVector;
     vec2 minorAxis = min(sqrt(2.0 * lambda2), 1024.0) * vec2(diagonalVector.y, -diagonalVector.x);
 
-    vColor = vec4((cov.w) & 0xffu, (cov.w >> 8) & 0xffu, (cov.w >> 16) & 0xffu, (cov.w >> 24) & 0xffu) / 255.0;
+    uint colorTransformIndex = texelFetch(u_colorTransformIndices, ivec2(uint(index) & 0x3ffu, uint(index) >> 10), 0).x;
+    mat4 colorTransform = mat4(
+        texelFetch(u_colorTransforms, ivec2(0, colorTransformIndex), 0),
+        texelFetch(u_colorTransforms, ivec2(1, colorTransformIndex), 0),
+        texelFetch(u_colorTransforms, ivec2(2, colorTransformIndex), 0),
+        texelFetch(u_colorTransforms, ivec2(3, colorTransformIndex), 0)
+    );
+
+    vec4 color = vec4((cov.w) & 0xffu, (cov.w >> 8) & 0xffu, (cov.w >> 16) & 0xffu, (cov.w >> 24) & 0xffu) / 255.0;
+    vColor = colorTransform * color;
+
     vPosition = position;
     vSize = length(majorAxis);
     vSelected = selected;
@@ -170,6 +182,8 @@ class RenderProgram extends ShaderProgram {
         let u_texture: WebGLUniformLocation;
         let u_transforms: WebGLUniformLocation;
         let u_transformIndices: WebGLUniformLocation;
+        let u_colorTransforms: WebGLUniformLocation;
+        let u_colorTransformIndices: WebGLUniformLocation;
 
         let u_outlineThickness: WebGLUniformLocation;
         let u_outlineColor: WebGLUniformLocation;
@@ -179,6 +193,9 @@ class RenderProgram extends ShaderProgram {
 
         let transformsTexture: WebGLTexture;
         let transformIndicesTexture: WebGLTexture;
+
+        let colorTransformsTexture: WebGLTexture;
+        let colorTransformIndicesTexture: WebGLTexture;
 
         let vertexBuffer: WebGLBuffer;
         let indexBuffer: WebGLBuffer;
@@ -251,6 +268,17 @@ class RenderProgram extends ShaderProgram {
             u_transformIndices = gl.getUniformLocation(this.program, "u_transformIndices") as WebGLUniformLocation;
             gl.uniform1i(u_transformIndices, 2);
 
+            colorTransformsTexture = gl.createTexture() as WebGLTexture;
+            u_colorTransforms = gl.getUniformLocation(this.program, "u_colorTransforms") as WebGLUniformLocation;
+            gl.uniform1i(u_colorTransforms, 3);
+
+            colorTransformIndicesTexture = gl.createTexture() as WebGLTexture;
+            u_colorTransformIndices = gl.getUniformLocation(
+                this.program,
+                "u_colorTransformIndices",
+            ) as WebGLUniformLocation;
+            gl.uniform1i(u_colorTransformIndices, 4);
+
             vertexBuffer = gl.createBuffer() as WebGLBuffer;
             gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-2, -2, 2, -2, 2, 2, -2, 2]), gl.STATIC_DRAW);
@@ -305,7 +333,11 @@ class RenderProgram extends ShaderProgram {
                 this.renderData.rebuild();
             }
 
-            if (this.renderData.dataChanged || this.renderData.transformsChanged) {
+            if (
+                this.renderData.dataChanged ||
+                this.renderData.transformsChanged ||
+                this.renderData.colorTransformsChanged
+            ) {
                 if (this.renderData.dataChanged) {
                     gl.activeTexture(gl.TEXTURE0);
                     gl.bindTexture(gl.TEXTURE_2D, this.splatTexture);
@@ -364,6 +396,44 @@ class RenderProgram extends ShaderProgram {
                     );
                 }
 
+                if (this.renderData.colorTransformsChanged) {
+                    gl.activeTexture(gl.TEXTURE3);
+                    gl.bindTexture(gl.TEXTURE_2D, colorTransformsTexture);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                    gl.texImage2D(
+                        gl.TEXTURE_2D,
+                        0,
+                        gl.RGBA32F,
+                        this.renderData.colorTransformsWidth,
+                        this.renderData.colorTransformsHeight,
+                        0,
+                        gl.RGBA,
+                        gl.FLOAT,
+                        this.renderData.colorTransforms,
+                    );
+
+                    gl.activeTexture(gl.TEXTURE4);
+                    gl.bindTexture(gl.TEXTURE_2D, colorTransformIndicesTexture);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                    gl.texImage2D(
+                        gl.TEXTURE_2D,
+                        0,
+                        gl.R32UI,
+                        this.renderData.colorTransformIndicesWidth,
+                        this.renderData.colorTransformIndicesHeight,
+                        0,
+                        gl.RED_INTEGER,
+                        gl.UNSIGNED_INT,
+                        this.renderData.colorTransformIndices,
+                    );
+                }
+
                 const detachedPositions = new Float32Array(this.renderData.positions.slice().buffer);
                 const detachedTransforms = new Float32Array(this.renderData.transforms.slice().buffer);
                 const detachedTransformIndices = new Uint32Array(this.renderData.transformIndices.slice().buffer);
@@ -381,6 +451,7 @@ class RenderProgram extends ShaderProgram {
 
                 this.renderData.dataChanged = false;
                 this.renderData.transformsChanged = false;
+                this.renderData.colorTransformsChanged = false;
             }
 
             this._camera.update();

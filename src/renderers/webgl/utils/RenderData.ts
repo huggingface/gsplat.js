@@ -2,10 +2,12 @@ import { Scene } from "../../../core/Scene";
 import { Splat } from "../../../splats/Splat";
 import DataWorker from "web-worker:./DataWorker.ts";
 import loadWasm from "../../../wasm/data";
+import { Matrix4 } from "../../../math/Matrix4";
 
 class RenderData {
     public dataChanged = false;
     public transformsChanged = false;
+    public colorTransformsChanged = false;
 
     private _splatIndices: Map<Splat, number>;
     private _offsets: Map<Splat, number>;
@@ -18,6 +20,12 @@ class RenderData {
     private _transformIndices: Uint32Array;
     private _transformIndicesWidth: number;
     private _transformIndicesHeight: number;
+    private _colorTransforms: Float32Array;
+    private _colorTransformsWidth: number;
+    private _colorTransformsHeight: number;
+    private _colorTransformIndices: Uint32Array;
+    private _colorTransformIndicesWidth: number;
+    private _colorTransformIndicesHeight: number;
     private _positions: Float32Array;
     private _rotations: Float32Array;
     private _scales: Float32Array;
@@ -61,6 +69,22 @@ class RenderData {
         this._transformIndicesHeight = Math.ceil(this.vertexCount / this._transformIndicesWidth);
         this._transformIndices = new Uint32Array(this._transformIndicesWidth * this._transformIndicesHeight);
 
+        this._colorTransformsWidth = 4;
+        this._colorTransformsHeight = 64;
+        this._colorTransforms = new Float32Array(this._colorTransformsWidth * this._colorTransformsHeight * 4);
+        this._colorTransforms.fill(0);
+        this._colorTransforms[0] = 1;
+        this._colorTransforms[5] = 1;
+        this._colorTransforms[10] = 1;
+        this._colorTransforms[15] = 1;
+
+        this._colorTransformIndicesWidth = 1024;
+        this._colorTransformIndicesHeight = Math.ceil(this.vertexCount / this._colorTransformIndicesWidth);
+        this._colorTransformIndices = new Uint32Array(
+            this._colorTransformIndicesWidth * this._colorTransformIndicesHeight,
+        );
+        this.colorTransformIndices.fill(0);
+
         this._positions = new Float32Array(this.vertexCount * 3);
         this._rotations = new Float32Array(this.vertexCount * 4);
         this._scales = new Float32Array(this.vertexCount * 3);
@@ -78,11 +102,47 @@ class RenderData {
             this.transformsChanged = true;
         };
 
+        const updateColorTransforms = () => {
+            let colorTransformsChanged = false;
+            for (const splat of this._splatIndices.keys()) {
+                if (splat.colorTransformChanged) {
+                    colorTransformsChanged = true;
+                    break;
+                }
+            }
+            if (!colorTransformsChanged) {
+                return;
+            }
+            const colorTransformsMap: Matrix4[] = [new Matrix4()];
+            this._colorTransformIndices.fill(0);
+            let i = 1;
+            for (const splat of this._splatIndices.keys()) {
+                const offset = this._offsets.get(splat) as number;
+                for (const colorTransform of splat.colorTransforms) {
+                    if (!colorTransformsMap.includes(colorTransform)) {
+                        colorTransformsMap.push(colorTransform);
+                        i++;
+                    }
+                }
+                for (const index of splat.colorTransformsMap.keys()) {
+                    const colorTransformIndex = splat.colorTransformsMap.get(index) as number;
+                    this._colorTransformIndices[index + offset] = colorTransformIndex + i - 1;
+                }
+                splat.colorTransformChanged = false;
+            }
+            for (let index = 0; index < colorTransformsMap.length; index++) {
+                const colorTransform = colorTransformsMap[index];
+                this._colorTransforms.set(colorTransform.buffer, index * 16);
+            }
+            this.colorTransformsChanged = true;
+        };
+
         this._worker.onmessage = (e) => {
             if (e.data.response) {
                 const response = e.data.response;
                 const splat = lookup.get(response.offset) as Splat;
                 updateTransform(splat);
+                updateColorTransforms();
 
                 const splatIndex = this._splatIndices.get(splat) as number;
                 for (let i = 0; i < splat.data.vertexCount; i++) {
@@ -199,11 +259,16 @@ class RenderData {
             wasmModule._free(worldScalesPtr);
 
             this.dataChanged = true;
+            this.colorTransformsChanged = true;
         };
 
         const build = (splat: Splat) => {
             if (splat.positionChanged || splat.rotationChanged || splat.scaleChanged || splat.selectedChanged) {
                 updateTransform(splat);
+            }
+
+            if (splat.colorTransformChanged) {
+                updateColorTransforms();
             }
 
             if (!splat.data.changed || splat.data.detached) return;
@@ -279,6 +344,8 @@ class RenderData {
         for (const splat of this._splatIndices.keys()) {
             buildImmediate(splat);
         }
+
+        updateColorTransforms();
     }
 
     get offsets() {
@@ -319,6 +386,30 @@ class RenderData {
 
     get transformIndicesHeight() {
         return this._transformIndicesHeight;
+    }
+
+    get colorTransforms() {
+        return this._colorTransforms;
+    }
+
+    get colorTransformsWidth() {
+        return this._colorTransformsWidth;
+    }
+
+    get colorTransformsHeight() {
+        return this._colorTransformsHeight;
+    }
+
+    get colorTransformIndices() {
+        return this._colorTransformIndices;
+    }
+
+    get colorTransformIndicesWidth() {
+        return this._colorTransformIndicesWidth;
+    }
+
+    get colorTransformIndicesHeight() {
+        return this._colorTransformIndicesHeight;
     }
 
     get positions() {
