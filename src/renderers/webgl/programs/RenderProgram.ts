@@ -72,6 +72,10 @@ void main () {
     mat3 T = transpose(mat3(viewTransform)) * J;
     mat3 cov2d = transpose(T) * Vrk * T;
 
+    //ref: https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu#L110-L111
+    cov2d[0][0] += 0.3;
+    cov2d[1][1] += 0.3;
+
     float mid = (cov2d[0][0] + cov2d[1][1]) / 2.0;
     float radius = length(vec2((cov2d[0][0] - cov2d[1][1]) / 2.0, cov2d[0][1]));
     float lambda1 = mid + radius, lambda2 = mid - radius;
