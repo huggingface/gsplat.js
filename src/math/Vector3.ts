@@ -88,6 +88,47 @@ class Vector3 {
         return new Vector3(this.x + (v.x - this.x) * t, this.y + (v.y - this.y) * t, this.z + (v.z - this.z) * t);
     }
 
+    min(v: Vector3): Vector3 {
+        return new Vector3(Math.min(this.x, v.x), Math.min(this.y, v.y), Math.min(this.z, v.z));
+    }
+
+    max(v: Vector3): Vector3 {
+        return new Vector3(Math.max(this.x, v.x), Math.max(this.y, v.y), Math.max(this.z, v.z));
+    }
+
+    getComponent(axis: number) {
+        switch (axis) {
+            case 0:
+                return this.x;
+            case 1:
+                return this.y;
+            case 2:
+                return this.z;
+            default:
+                throw new Error(`Invalid component index: ${axis}`);
+        }
+    }
+
+    minComponent(): number {
+        if (this.x < this.y && this.x < this.z) {
+            return 0;
+        } else if (this.y < this.z) {
+            return 1;
+        } else {
+            return 2;
+        }
+    }
+
+    maxComponent(): number {
+        if (this.x > this.y && this.x > this.z) {
+            return 0;
+        } else if (this.y > this.z) {
+            return 1;
+        } else {
+            return 2;
+        }
+    }
+
     magnitude(): number {
         return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
     }

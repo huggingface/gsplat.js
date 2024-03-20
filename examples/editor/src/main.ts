@@ -11,11 +11,16 @@ const controlsDisplayButton = document.getElementById("controls-display-button")
 const controlsDisplay = document.getElementById("controls-display") as HTMLDivElement;
 const uploadModal = document.getElementById("upload-modal") as HTMLDialogElement;
 const uploadModalClose = document.getElementById("upload-modal-close") as HTMLButtonElement;
+const downloadModal = document.getElementById("download-modal") as HTMLDialogElement;
+const downloadModalClose = document.getElementById("download-modal-close") as HTMLButtonElement;
 const fileInput = document.getElementById("file-input") as HTMLInputElement;
 const urlInput = document.getElementById("url-input") as HTMLInputElement;
 const uploadSubmit = document.getElementById("upload-submit") as HTMLButtonElement;
 const uploadError = document.getElementById("upload-error") as HTMLDivElement;
+const downloadSubmit = document.getElementById("download-submit") as HTMLButtonElement;
 const learnMoreButton = document.getElementById("about") as HTMLButtonElement;
+const splatRadio = document.getElementById("splat") as HTMLInputElement;
+const plyRadio = document.getElementById("ply") as HTMLInputElement;
 
 const engine = new Engine(canvas);
 
@@ -42,7 +47,7 @@ async function selectFile(file: File) {
             (progress: number) => {
                 progressIndicator.value = progress * 100;
             },
-            format,
+            format
         );
         progressDialog.close();
     } else {
@@ -91,11 +96,11 @@ async function main() {
     });
 
     downloadButton.addEventListener("click", () => {
-        if (SelectionManager.selectedSplat !== null) {
-            SelectionManager.selectedSplat.saveToFile();
-        } else {
-            engine.scene.saveToFile();
-        }
+        downloadModal.style.display = "block";
+    });
+
+    downloadModalClose.addEventListener("click", () => {
+        downloadModal.style.display = "none";
     });
 
     controlsDisplayButton.addEventListener("click", () => {
@@ -125,13 +130,31 @@ async function main() {
             await SPLAT.PLYLoader.LoadAsync(
                 url,
                 engine.scene,
-                (progress) => (progressIndicator.value = progress * 100),
+                (progress) => (progressIndicator.value = progress * 100)
             );
             progressDialog.close();
         } else {
             uploadError.style.display = "block";
             uploadError.innerText = `Invalid file type: ${url}`;
             return;
+        }
+    });
+
+    downloadSubmit.addEventListener("click", () => {
+        let format;
+        if (splatRadio.checked) {
+            format = "splat";
+        } else if (plyRadio.checked) {
+            format = "ply";
+        } else {
+            throw new Error("Unknown format");
+        }
+        const filename = "model." + format;
+
+        if (SelectionManager.selectedSplat !== null) {
+            SelectionManager.selectedSplat.saveToFile(filename, format);
+        } else {
+            engine.scene.saveToFile(filename, format);
         }
     });
 

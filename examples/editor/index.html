@@ -44,7 +44,7 @@
                         id="url-input"
                         placeholder="https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bonsai/bonsai-7k-mini.splat"
                     />
-                    <button id="upload-submit">Import</button>
+                    <button id="upload-submit" class="submit">Import</button>
                 </div>
                 <div class="modal-section">
                     <p id="upload-error"></p>
@@ -52,7 +52,31 @@
             </div>
         </div>
 
-        <button id="download-button" class="tool-button" title="Download Selection">
+        <div id="download-modal" class="modal">
+            <div class="modal-content">
+                <span id="download-modal-close" class="close">&times;</span>
+                <p>Export Splat</p>
+                <hr class="divider" />
+                <div class="modal-section">
+                    <div id="format-select">
+                        <p>Select format</p>
+                        <div>
+                            <input type="radio" id="splat" name="format" value="splat" checked />
+                            <label for="splat">.splat</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="ply" name="format" value="ply" />
+                            <label for="ply">.ply</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <button id="download-submit" class="submit">Export</button>
+                </div>
+            </div>
+        </div>
+
+        <button id="download-button" class="tool-button" title="Export Splat">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32">
                 <path
                     fill="#ddd"
