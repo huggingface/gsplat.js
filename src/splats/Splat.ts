@@ -4,6 +4,7 @@ import { Vector3 } from "../math/Vector3";
 import { Quaternion } from "../math/Quaternion";
 import { Converter } from "../utils/Converter";
 import { Matrix4 } from "../math/Matrix4";
+import { Box3 } from "../math/Box3";
 
 class Splat extends Object3D {
     public selectedChanged: boolean = false;
@@ -13,11 +14,34 @@ class Splat extends Object3D {
     private _selected: boolean = false;
     private _colorTransforms: Array<Matrix4> = [];
     private _colorTransformsMap: Map<number, number> = new Map();
+    private _bounds: Box3;
+
+    recalculateBounds: () => void;
 
     constructor(splat: SplatData | undefined = undefined) {
         super();
 
         this._data = splat || new SplatData();
+        this._bounds = new Box3(
+            new Vector3(Infinity, Infinity, Infinity),
+            new Vector3(-Infinity, -Infinity, -Infinity),
+        );
+
+        this.recalculateBounds = () => {
+            this._bounds = new Box3(
+                new Vector3(Infinity, Infinity, Infinity),
+                new Vector3(-Infinity, -Infinity, -Infinity),
+            );
+            for (let i = 0; i < this._data.vertexCount; i++) {
+                this._bounds.expand(
+                    new Vector3(
+                        this._data.positions[3 * i],
+                        this._data.positions[3 * i + 1],
+                        this._data.positions[3 * i + 2],
+                    ),
+                );
+            }
+        };
 
         this.applyPosition = () => {
             this.data.translate(this.position);
@@ -33,6 +57,8 @@ class Splat extends Object3D {
             this.data.scale(this.scale);
             this.scale = new Vector3(1, 1, 1);
         };
+
+        this.recalculateBounds();
     }
 
     saveToFile(name: string | null = null, format: string | null = null) {
@@ -90,6 +116,16 @@ class Splat extends Object3D {
 
     get colorTransformsMap() {
         return this._colorTransformsMap;
+    }
+
+    get bounds() {
+        let center = this._bounds.center();
+        center = center.add(this.position);
+
+        let size = this._bounds.size();
+        size = size.multiply(this.scale);
+
+        return new Box3(center.subtract(size.divide(2)), center.add(size.divide(2)));
     }
 }
 

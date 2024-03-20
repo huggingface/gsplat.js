@@ -1,139 +1,82 @@
+import { Camera } from "../../../cameras/Camera";
+import { Vector3 } from "../../../math/Vector3";
 import { Splat } from "../../../splats/Splat";
 import { RenderProgram } from "../programs/RenderProgram";
-
-import loadWasm from "../../../wasm/intersect";
+import { Box3 } from "../../../math/Box3";
+import { BVH } from "../../../math/BVH";
+import { RenderData } from "./RenderData";
 
 class IntersectionTester {
     testPoint: (x: number, y: number) => Splat | null;
 
-    constructor(renderProgram: RenderProgram) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let wasmModule: any;
+    constructor(renderProgram: RenderProgram, maxDistance: number = 100, resolution: number = 1.0) {
+        let vertexCount = 0;
+        let bvh: BVH | null = null;
+        let lookup: Splat[] = [];
 
-        const initWasm = async () => {
-            wasmModule = await loadWasm();
-        };
-
-        initWasm();
-
-        let allocatedVertexCount: number = 0;
-        let allocatedTransformCount: number = 0;
-
-        let viewPtr: number;
-        let transformsPtr: number;
-        let transformIndicesPtr: number;
-        let positionsPtr: number;
-        let rotationsPtr: number;
-        let scalesPtr: number;
-        let depthIndexPtr: number;
-        let chunksPtr: number;
-        let originPtr: number;
-        let directionPtr: number;
-        let resultPtr: number;
-
-        const allocateVertices = (vertexCount: number) => {
-            if (vertexCount > allocatedVertexCount) {
-                if (allocatedVertexCount > 0) {
-                    wasmModule._free(viewPtr);
-                    wasmModule._free(transformIndicesPtr);
-                    wasmModule._free(positionsPtr);
-                    wasmModule._free(rotationsPtr);
-                    wasmModule._free(scalesPtr);
-                    wasmModule._free(depthIndexPtr);
-                    wasmModule._free(chunksPtr);
-                    wasmModule._free(originPtr);
-                    wasmModule._free(directionPtr);
-                    wasmModule._free(resultPtr);
-                }
-
-                allocatedVertexCount = vertexCount;
-
-                viewPtr = wasmModule._malloc(16 * 4);
-                transformIndicesPtr = wasmModule._malloc(allocatedVertexCount * 4);
-                positionsPtr = wasmModule._malloc(3 * allocatedVertexCount * 4);
-                rotationsPtr = wasmModule._malloc(4 * allocatedVertexCount * 4);
-                scalesPtr = wasmModule._malloc(3 * allocatedVertexCount * 4);
-                depthIndexPtr = wasmModule._malloc(allocatedVertexCount * 4);
-                chunksPtr = wasmModule._malloc(allocatedVertexCount);
-                originPtr = wasmModule._malloc(3 * 4);
-                directionPtr = wasmModule._malloc(3 * 4);
-                resultPtr = wasmModule._malloc(4);
+        const build = () => {
+            if (renderProgram.renderData === null) {
+                console.error("IntersectionTester cannot be called before renderProgram has been initialized");
+                return;
             }
-        };
-
-        const allocateTransforms = (transformCount: number) => {
-            if (transformCount > allocatedTransformCount) {
-                if (allocatedTransformCount > 0) {
-                    wasmModule._free(transformsPtr);
-                }
-
-                allocatedTransformCount = transformCount;
-
-                transformsPtr = wasmModule._malloc(20 * allocatedTransformCount * 4);
+            lookup = [];
+            const renderData = renderProgram.renderData as RenderData;
+            const boxes = new Array<Box3>(renderData.offsets.size);
+            let i = 0;
+            const bounds = new Box3(
+                new Vector3(Infinity, Infinity, Infinity),
+                new Vector3(-Infinity, -Infinity, -Infinity),
+            );
+            for (const splat of renderData.offsets.keys()) {
+                const splatBounds = splat.bounds;
+                boxes[i++] = splatBounds;
+                bounds.expand(splatBounds.min);
+                bounds.expand(splatBounds.max);
+                lookup.push(splat);
             }
+            bounds.permute();
+            bvh = new BVH(bounds, boxes);
+            vertexCount = renderData.vertexCount;
         };
 
         this.testPoint = (x: number, y: number) => {
-            if (!wasmModule) {
-                throw new Error("Wasm module not loaded");
-            }
-
-            if (!renderProgram.camera) {
-                throw new Error("Camera not set");
-            }
-
-            if (!renderProgram.renderData || !renderProgram.depthIndex || !renderProgram.chunks) {
+            if (renderProgram.renderData === null || renderProgram.camera === null) {
+                console.error("IntersectionTester cannot be called before renderProgram has been initialized");
                 return null;
             }
 
-            const renderData = renderProgram.renderData;
-            const depthIndex = renderProgram.depthIndex;
-            const chunks = renderProgram.chunks;
+            build();
 
-            const targetAllocatedVertexCount = Math.pow(2, Math.ceil(Math.log2(renderData.vertexCount)));
-            allocateVertices(targetAllocatedVertexCount);
+            if (bvh === null) {
+                console.error("Failed to build octree for IntersectionTester");
+                return null;
+            }
 
-            const targetAllocatedTransformCount = Math.pow(2, Math.ceil(Math.log2(renderData.transforms.length / 20)));
-            allocateTransforms(targetAllocatedTransformCount);
+            const renderData = renderProgram.renderData as RenderData;
+            const camera = renderProgram.camera as Camera;
 
-            const normalizedX = (x + 1) / 2;
-            const normalizedY = (y + 1) / 2;
-            const chunk = Math.floor(normalizedX * 15) + Math.floor(normalizedY * 15) * 15;
+            if (vertexCount !== renderData.vertexCount) {
+                console.warn("IntersectionTester has not been rebuilt since the last render");
+            }
 
-            const camera = renderProgram.camera;
             const ray = camera.screenPointToRay(x, y);
-
-            wasmModule.HEAPF32.set(camera.data.viewMatrix.buffer, viewPtr / 4);
-            wasmModule.HEAPU32.set(renderData.transformIndices, transformIndicesPtr / 4);
-            wasmModule.HEAPF32.set(renderData.positions, positionsPtr / 4);
-            wasmModule.HEAPF32.set(renderData.rotations, rotationsPtr / 4);
-            wasmModule.HEAPF32.set(renderData.scales, scalesPtr / 4);
-            wasmModule.HEAPU32.set(depthIndex, depthIndexPtr / 4);
-            wasmModule.HEAPU8.set(chunks, chunksPtr);
-            wasmModule.HEAPF32.set(camera.position.flat(), originPtr / 4);
-            wasmModule.HEAPF32.set(ray.flat(), directionPtr / 4);
-            wasmModule.HEAPF32.set(renderData.transforms, transformsPtr / 4);
-
-            wasmModule._evaluate(
-                viewPtr,
-                transformsPtr,
-                transformIndicesPtr,
-                positionsPtr,
-                rotationsPtr,
-                scalesPtr,
-                depthIndexPtr,
-                chunksPtr,
-                renderData.vertexCount,
-                chunk,
-                originPtr,
-                directionPtr,
-                resultPtr,
-            );
-
-            const result = wasmModule.HEAPU32[resultPtr / 4];
-            if (result !== 0xffffffff) {
-                const splat = renderData.getSplat(result) as Splat;
-                return splat;
+            for (let x = 0; x < maxDistance; x += resolution) {
+                const point = camera.position.add(ray.multiply(x));
+                const minPoint = new Vector3(
+                    point.x - resolution / 2,
+                    point.y - resolution / 2,
+                    point.z - resolution / 2,
+                );
+                const maxPoint = new Vector3(
+                    point.x + resolution / 2,
+                    point.y + resolution / 2,
+                    point.z + resolution / 2,
+                );
+                const queryBox = new Box3(minPoint, maxPoint);
+                const points = bvh.queryRange(queryBox);
+                if (points.length > 0) {
+                    return lookup[points[0]];
+                }
             }
 
             return null;

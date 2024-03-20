@@ -150,7 +150,7 @@ progress::-moz-progress-bar {
     padding: 16px;
     border: 1px solid #888;
     width: 80%;
-    max-width: 960px;
+    max-width: 768px;
     color: #ddd;
 }
 
@@ -183,7 +183,7 @@ progress::-moz-progress-bar {
     margin: 0;
 }
 
-#upload-submit {
+.submit {
     width: 80px;
     background-color: #000;
     border: 1px solid #888;
@@ -193,11 +193,11 @@ progress::-moz-progress-bar {
     cursor: pointer;
 }
 
-#upload-submit:hover {
+.submit:hover {
     background-color: #222;
 }
 
-#upload-submit:focus {
+.submit:focus {
     outline: inherit;
 }
 
@@ -233,4 +233,33 @@ input[type="file"] {
     text-decoration: underline;
     cursor: pointer;
     pointer-events: auto;
+}
+
+#format-select {
+    display: flex;
+    align-items: center;
+}
+
+#format-select p {
+    margin-right: 8px;
+}
+
+#format-select div {
+    margin: 0 8px;
+}
+
+input[type="radio"] {
+    appearance: none;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    padding: 3px;
+    background-clip: content-box;
+    border: 1px solid #888;
+    background-color: #000;
+    border-radius: 50%;
+}
+
+input[type="radio"]:checked {
+    background-color: #ddd;
 }
