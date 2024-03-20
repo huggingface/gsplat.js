@@ -47,7 +47,7 @@ async function selectFile(file: File) {
             (progress: number) => {
                 progressIndicator.value = progress * 100;
             },
-            format
+            format,
         );
         progressDialog.close();
     } else {
@@ -130,7 +130,7 @@ async function main() {
             await SPLAT.PLYLoader.LoadAsync(
                 url,
                 engine.scene,
-                (progress) => (progressIndicator.value = progress * 100)
+                (progress) => (progressIndicator.value = progress * 100),
             );
             progressDialog.close();
         } else {
