@@ -160,8 +160,8 @@ class RenderProgram extends ShaderProgram {
     private _outlineColor: Color32 = new Color32(255, 165, 0, 255);
     private _renderData: RenderData | null = null;
     private _depthIndex: Uint32Array = new Uint32Array();
-    private _chunks: Uint8Array | null = null;
     private _splatTexture: WebGLTexture | null = null;
+    private _worker: Worker | null = null;
 
     protected _initialize: () => void;
     protected _resize: () => void;
@@ -176,8 +176,6 @@ class RenderProgram extends ShaderProgram {
 
         const canvas = renderer.canvas;
         const gl = renderer.gl;
-
-        let worker: Worker;
 
         let u_projection: WebGLUniformLocation;
         let u_viewport: WebGLUniformLocation;
@@ -218,12 +216,11 @@ class RenderProgram extends ShaderProgram {
         };
 
         const createWorker = () => {
-            worker = new SortWorker();
-            worker.onmessage = (e) => {
+            this._worker = new SortWorker();
+            this._worker.onmessage = (e) => {
                 if (e.data.depthIndex) {
-                    const { depthIndex, chunks } = e.data;
+                    const { depthIndex } = e.data;
                     this._depthIndex = depthIndex;
-                    this._chunks = chunks;
                     gl.bindBuffer(gl.ARRAY_BUFFER, indexBuffer);
                     gl.bufferData(gl.ARRAY_BUFFER, depthIndex, gl.STATIC_DRAW);
                 }
@@ -330,6 +327,10 @@ class RenderProgram extends ShaderProgram {
         this._render = () => {
             if (!this._scene || !this._camera || !this.renderData) {
                 console.error("Cannot render without scene and camera");
+                return;
+            }
+
+            if (this.renderData.vertexCount === 0) {
                 return;
             }
 
@@ -441,7 +442,7 @@ class RenderProgram extends ShaderProgram {
                 const detachedPositions = new Float32Array(this.renderData.positions.slice().buffer);
                 const detachedTransforms = new Float32Array(this.renderData.transforms.slice().buffer);
                 const detachedTransformIndices = new Uint32Array(this.renderData.transformIndices.slice().buffer);
-                worker.postMessage(
+                this._worker?.postMessage(
                     {
                         sortData: {
                             positions: detachedPositions,
@@ -459,7 +460,7 @@ class RenderProgram extends ShaderProgram {
             }
 
             this._camera.update();
-            worker.postMessage({ viewProj: this._camera.data.viewProj.buffer });
+            this._worker?.postMessage({ viewProj: this._camera.data.viewProj.buffer });
 
             gl.viewport(0, 0, canvas.width, canvas.height);
             gl.clearColor(0, 0, 0, 0);
@@ -498,7 +499,7 @@ class RenderProgram extends ShaderProgram {
                 }
             }
 
-            worker.terminate();
+            this._worker?.terminate();
             this.renderData.dispose();
 
             gl.deleteTexture(this.splatTexture);
@@ -532,10 +533,6 @@ class RenderProgram extends ShaderProgram {
         return this._depthIndex;
     }
 
-    get chunks() {
-        return this._chunks;
-    }
-
     get splatTexture() {
         return this._splatTexture;
     }
@@ -554,6 +551,10 @@ class RenderProgram extends ShaderProgram {
 
     set outlineColor(value: Color32) {
         this._setOutlineColor(value);
+    }
+
+    get worker() {
+        return this._worker;
     }
 
     protected _getVertexSource() {

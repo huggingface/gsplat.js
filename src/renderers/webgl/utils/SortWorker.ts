@@ -18,7 +18,6 @@ let viewProjPtr: number;
 let transformsPtr: number;
 let transformIndicesPtr: number;
 let positionsPtr: number;
-let chunksPtr: number;
 let depthBufferPtr: number;
 let depthIndexPtr: number;
 let startsPtr: number;
@@ -48,7 +47,6 @@ const allocateBuffers = async () => {
             wasmModule._free(viewProjPtr);
             wasmModule._free(transformIndicesPtr);
             wasmModule._free(positionsPtr);
-            wasmModule._free(chunksPtr);
             wasmModule._free(depthBufferPtr);
             wasmModule._free(depthIndexPtr);
             wasmModule._free(startsPtr);
@@ -60,7 +58,6 @@ const allocateBuffers = async () => {
         viewProjPtr = wasmModule._malloc(16 * 4);
         transformIndicesPtr = wasmModule._malloc(allocatedVertexCount * 4);
         positionsPtr = wasmModule._malloc(3 * allocatedVertexCount * 4);
-        chunksPtr = wasmModule._malloc(allocatedVertexCount);
         depthBufferPtr = wasmModule._malloc(allocatedVertexCount * 4);
         depthIndexPtr = wasmModule._malloc(allocatedVertexCount * 4);
         startsPtr = wasmModule._malloc(allocatedVertexCount * 4);
@@ -99,7 +96,6 @@ const runSort = () => {
         transformIndicesPtr,
         sortData.vertexCount,
         positionsPtr,
-        chunksPtr,
         depthBufferPtr,
         depthIndexPtr,
         startsPtr,
@@ -109,13 +105,7 @@ const runSort = () => {
     const depthIndex = new Uint32Array(wasmModule.HEAPU32.buffer, depthIndexPtr, sortData.vertexCount);
     const detachedDepthIndex = new Uint32Array(depthIndex.slice().buffer);
 
-    const chunks = new Uint8Array(wasmModule.HEAPU8.buffer, chunksPtr, sortData.vertexCount);
-    const detachedChunks = new Uint8Array(chunks.slice().buffer);
-
-    self.postMessage({ depthIndex: detachedDepthIndex, chunks: detachedChunks }, [
-        detachedDepthIndex.buffer,
-        detachedChunks.buffer,
-    ]);
+    self.postMessage({ depthIndex: detachedDepthIndex }, [detachedDepthIndex.buffer]);
 
     lock = false;
 };
