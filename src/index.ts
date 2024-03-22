@@ -1,6 +1,8 @@
 export { Object3D } from "./core/Object3D";
 export { SplatData } from "./splats/SplatData";
+export { SplatvData } from "./splats/SplatvData";
 export { Splat } from "./splats/Splat";
+export { Splatv } from "./splats/Splatv";
 export { CameraData } from "./cameras/CameraData";
 export { Camera } from "./cameras/Camera";
 export { Scene } from "./core/Scene";

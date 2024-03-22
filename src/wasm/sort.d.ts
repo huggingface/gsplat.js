@@ -7,7 +7,6 @@ interface WasmModule {
         transformIndices: number,
         vertexCount: number,
         positions: number,
-        chunks: number,
         depthBuffer: number,
         depthIndex: number,
         starts: number,

@@ -160,7 +160,6 @@ class RenderProgram extends ShaderProgram {
     private _outlineColor: Color32 = new Color32(255, 165, 0, 255);
     private _renderData: RenderData | null = null;
     private _depthIndex: Uint32Array = new Uint32Array();
-    private _chunks: Uint8Array | null = null;
     private _splatTexture: WebGLTexture | null = null;
 
     protected _initialize: () => void;
@@ -221,9 +220,8 @@ class RenderProgram extends ShaderProgram {
             worker = new SortWorker();
             worker.onmessage = (e) => {
                 if (e.data.depthIndex) {
-                    const { depthIndex, chunks } = e.data;
+                    const { depthIndex } = e.data;
                     this._depthIndex = depthIndex;
-                    this._chunks = chunks;
                     gl.bindBuffer(gl.ARRAY_BUFFER, indexBuffer);
                     gl.bufferData(gl.ARRAY_BUFFER, depthIndex, gl.STATIC_DRAW);
                 }
@@ -530,10 +528,6 @@ class RenderProgram extends ShaderProgram {
 
     get depthIndex() {
         return this._depthIndex;
-    }
-
-    get chunks() {
-        return this._chunks;
     }
 
     get splatTexture() {

@@ -5,7 +5,7 @@
 
 extern "C" {
 void sort(float *viewProj, float *transforms, uint32_t *transformIndices, uint32_t vertexCount, float *positions,
-          uint8_t *chunks, uint32_t *depthBuffer, uint32_t *depthIndex, uint32_t *starts, uint32_t *counts) {
+          uint32_t *depthBuffer, uint32_t *depthIndex, uint32_t *starts, uint32_t *counts) {
     int32_t minDepth = 0x7fffffff;
     int32_t maxDepth = 0x80000000;
     int32_t previousTransformIndex = -1;
@@ -62,21 +62,6 @@ void sort(float *viewProj, float *transforms, uint32_t *transformIndices, uint32
         if (depth < minDepth) {
             minDepth = depth;
         }
-
-        float projectedX = viewTransform[0] * x + viewTransform[4] * y + viewTransform[8] * z + viewTransform[12];
-        float projectedY = viewTransform[1] * x + viewTransform[5] * y + viewTransform[9] * z + viewTransform[13];
-        float projectedW = viewTransform[3] * x + viewTransform[7] * y + viewTransform[11] * z + viewTransform[15];
-        uint8_t chunk = 0xff;
-        if (projectedW != 0) {
-            float normalizedX = (projectedX / projectedW + 1) / 2;
-            float normalizedY = (projectedY / projectedW + 1) / 2;
-            if (normalizedX >= 0 && normalizedX < 1 && normalizedY >= 0 && normalizedY < 1) {
-                uint8_t screenSpaceX = (uint8_t)(normalizedX * 15);
-                uint8_t screenSpaceY = (uint8_t)(normalizedY * 15);
-                chunk = screenSpaceX + screenSpaceY * 15;
-            }
-        }
-        chunks[i] = chunk;
     }
 
     const uint32_t depthRange = 256 * 256;
