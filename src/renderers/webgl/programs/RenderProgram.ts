@@ -161,6 +161,7 @@ class RenderProgram extends ShaderProgram {
     private _renderData: RenderData | null = null;
     private _depthIndex: Uint32Array = new Uint32Array();
     private _splatTexture: WebGLTexture | null = null;
+    private _worker: Worker | null = null;
 
     protected _initialize: () => void;
     protected _resize: () => void;
@@ -175,8 +176,6 @@ class RenderProgram extends ShaderProgram {
 
         const canvas = renderer.canvas;
         const gl = renderer.gl;
-
-        let worker: Worker;
 
         let u_projection: WebGLUniformLocation;
         let u_viewport: WebGLUniformLocation;
@@ -217,8 +216,8 @@ class RenderProgram extends ShaderProgram {
         };
 
         const createWorker = () => {
-            worker = new SortWorker();
-            worker.onmessage = (e) => {
+            this._worker = new SortWorker();
+            this._worker.onmessage = (e) => {
                 if (e.data.depthIndex) {
                     const { depthIndex } = e.data;
                     this._depthIndex = depthIndex;
@@ -331,6 +330,10 @@ class RenderProgram extends ShaderProgram {
                 return;
             }
 
+            if (this.renderData.vertexCount === 0) {
+                return;
+            }
+
             if (this.renderData.needsRebuild) {
                 this.renderData.rebuild();
             }
@@ -439,7 +442,7 @@ class RenderProgram extends ShaderProgram {
                 const detachedPositions = new Float32Array(this.renderData.positions.slice().buffer);
                 const detachedTransforms = new Float32Array(this.renderData.transforms.slice().buffer);
                 const detachedTransformIndices = new Uint32Array(this.renderData.transformIndices.slice().buffer);
-                worker.postMessage(
+                this._worker?.postMessage(
                     {
                         sortData: {
                             positions: detachedPositions,
@@ -457,7 +460,7 @@ class RenderProgram extends ShaderProgram {
             }
 
             this._camera.update();
-            worker.postMessage({ viewProj: this._camera.data.viewProj.buffer });
+            this._worker?.postMessage({ viewProj: this._camera.data.viewProj.buffer });
 
             gl.viewport(0, 0, canvas.width, canvas.height);
             gl.clearColor(0, 0, 0, 0);
@@ -496,7 +499,7 @@ class RenderProgram extends ShaderProgram {
                 }
             }
 
-            worker.terminate();
+            this._worker?.terminate();
             this.renderData.dispose();
 
             gl.deleteTexture(this.splatTexture);
@@ -548,6 +551,10 @@ class RenderProgram extends ShaderProgram {
 
     set outlineColor(value: Color32) {
         this._setOutlineColor(value);
+    }
+
+    get worker() {
+        return this._worker;
     }
 
     protected _getVertexSource() {

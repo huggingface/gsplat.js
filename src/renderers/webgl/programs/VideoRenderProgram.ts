@@ -1,9 +1,10 @@
-import SortWorker from "web-worker:../utils/SortWorker.ts";
-
-import { SplatvData } from "../../../index";
+import { Splatv } from "../../../splats/Splatv";
+import { SplatvData } from "../../../splats/SplatvData";
 import { WebGLRenderer } from "../../WebGLRenderer";
 import { ShaderPass } from "../passes/ShaderPass";
 import { ShaderProgram } from "./ShaderProgram";
+import { ObjectAddedEvent, ObjectChangedEvent, ObjectRemovedEvent } from "../../../events/Events";
+import { Matrix4 } from "../../../math/Matrix4";
 
 const vertexShaderSource = /* glsl */ `#version 300 es
 precision highp float;
@@ -122,7 +123,7 @@ class VideoRenderProgram extends ShaderProgram {
     protected _render: () => void;
     protected _dispose: () => void;
 
-    constructor(renderer: WebGLRenderer, passes: ShaderPass[]) {
+    constructor(renderer: WebGLRenderer, passes: ShaderPass[] = []) {
         super(renderer, passes);
 
         const canvas = renderer.canvas;
@@ -156,8 +157,12 @@ class VideoRenderProgram extends ShaderProgram {
             gl.uniform2fv(u_viewport, new Float32Array([canvas.width, canvas.height]));
         };
 
-        const createWorker = () => {
-            worker = new SortWorker();
+        const setupWorker = () => {
+            if (renderer.renderProgram.worker === null) {
+                console.error("Render program is not initialized. Cannot render without worker");
+                return;
+            }
+            worker = renderer.renderProgram.worker;
             worker.onmessage = (e) => {
                 if (e.data.depthIndex) {
                     const { depthIndex } = e.data;
@@ -167,6 +172,198 @@ class VideoRenderProgram extends ShaderProgram {
                 }
             };
         };
+
+        this._initialize = () => {
+            if (!this._scene || !this._camera) {
+                console.error("Cannot render without scene and camera");
+                return;
+            }
+
+            this._resize();
+
+            this._scene.addEventListener("objectAdded", handleObjectAdded);
+            this._scene.addEventListener("objectRemoved", handleObjectRemoved);
+            for (const object of this._scene.objects) {
+                if (object instanceof Splatv) {
+                    if (this._renderData === null) {
+                        this._renderData = object.data;
+                        object.addEventListener("objectChanged", handleObjectChanged);
+                    } else {
+                        console.warn("Multiple Splatv objects are not currently supported");
+                    }
+                }
+            }
+
+            if (this._renderData === null) {
+                console.error("Cannot render without Splatv object");
+                return;
+            }
+
+            u_focal = gl.getUniformLocation(this.program, "focal") as WebGLUniformLocation;
+            gl.uniform2fv(u_focal, new Float32Array([this._camera.data.fx, this._camera.data.fy]));
+
+            u_view = gl.getUniformLocation(this.program, "view") as WebGLUniformLocation;
+            gl.uniformMatrix4fv(u_view, false, this._camera.data.viewMatrix.buffer);
+
+            this._splatTexture = gl.createTexture() as WebGLTexture;
+            u_texture = gl.getUniformLocation(this.program, "u_texture") as WebGLUniformLocation;
+            gl.uniform1i(u_texture, 0);
+
+            u_time = gl.getUniformLocation(this.program, "time") as WebGLUniformLocation;
+            gl.uniform1f(u_time, Math.sin(Date.now() / 1000) / 2 + 1 / 2);
+
+            vertexBuffer = gl.createBuffer() as WebGLBuffer;
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-2, -2, 2, -2, 2, 2, -2, 2]), gl.STATIC_DRAW);
+
+            positionAttribute = gl.getAttribLocation(this.program, "position");
+            gl.enableVertexAttribArray(positionAttribute);
+            gl.vertexAttribPointer(positionAttribute, 2, gl.FLOAT, false, 0, 0);
+
+            indexBuffer = gl.createBuffer() as WebGLBuffer;
+            indexAttribute = gl.getAttribLocation(this.program, "index");
+            gl.enableVertexAttribArray(indexAttribute);
+            gl.bindBuffer(gl.ARRAY_BUFFER, indexBuffer);
+
+            setupWorker();
+
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this._splatTexture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.texImage2D(
+                gl.TEXTURE_2D,
+                0,
+                gl.RGBA32UI,
+                this._renderData.width,
+                this._renderData.height,
+                0,
+                gl.RGBA_INTEGER,
+                gl.UNSIGNED_INT,
+                this._renderData.data,
+            );
+
+            const positions = this._renderData.positions;
+            const dummyTransforms = new Float32Array(new Matrix4().buffer);
+            const dummyTransformIndices = new Uint32Array(this._renderData.vertexCount);
+            dummyTransformIndices.fill(0);
+            worker.postMessage(
+                {
+                    sortData: {
+                        positions: positions,
+                        transforms: dummyTransforms,
+                        transformIndices: dummyTransformIndices,
+                        vertexCount: this._renderData.vertexCount,
+                    },
+                },
+                [positions.buffer, dummyTransforms.buffer, dummyTransformIndices.buffer],
+            );
+        };
+
+        const handleObjectAdded = (event: Event) => {
+            const e = event as ObjectAddedEvent;
+
+            if (e.object instanceof Splatv) {
+                if (this._renderData === null) {
+                    this._renderData = e.object.data;
+                    e.object.addEventListener("objectChanged", handleObjectChanged);
+                } else {
+                    console.warn("Splatv not supported by default RenderProgram. Use VideoRenderProgram instead.");
+                }
+            }
+
+            this.dispose();
+        };
+
+        const handleObjectRemoved = (event: Event) => {
+            const e = event as ObjectRemovedEvent;
+
+            if (e.object instanceof Splatv) {
+                if (this._renderData === e.object.data) {
+                    this._renderData = null;
+                    e.object.removeEventListener("objectChanged", handleObjectChanged);
+                }
+            }
+
+            this.dispose();
+        };
+
+        const handleObjectChanged = (event: Event) => {
+            const e = event as ObjectChangedEvent;
+
+            if (e.object instanceof Splatv && this._renderData === e.object.data) {
+                this.dispose();
+            }
+        };
+
+        this._render = () => {
+            if (!this._scene || !this._camera) {
+                console.error("Cannot render without scene and camera");
+                return;
+            }
+
+            if (!this._renderData) {
+                console.warn("Cannot render without Splatv object");
+                return;
+            }
+
+            this._camera.update();
+            worker.postMessage({ viewProj: this._camera.data.viewProj.buffer });
+
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            gl.disable(gl.DEPTH_TEST);
+            gl.enable(gl.BLEND);
+            gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.ONE, gl.ONE_MINUS_DST_ALPHA, gl.ONE);
+            gl.blendEquationSeparate(gl.FUNC_ADD, gl.FUNC_ADD);
+
+            gl.uniformMatrix4fv(u_projection, false, this._camera.data.projectionMatrix.buffer);
+            gl.uniformMatrix4fv(u_view, false, this._camera.data.viewMatrix.buffer);
+            gl.uniform1f(u_time, Math.sin(Date.now() / 1000) / 2 + 1 / 2);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+            gl.vertexAttribPointer(positionAttribute, 2, gl.FLOAT, false, 0, 0);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, indexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, this._depthIndex, gl.STATIC_DRAW);
+            gl.vertexAttribIPointer(indexAttribute, 1, gl.INT, 0, 0);
+            gl.vertexAttribDivisor(indexAttribute, 1);
+
+            gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, this._renderData.vertexCount);
+        };
+
+        this._dispose = () => {
+            if (!this._scene || !this._camera) {
+                console.error("Cannot dispose without scene and camera");
+                return;
+            }
+
+            this._scene.removeEventListener("objectAdded", handleObjectAdded);
+            this._scene.removeEventListener("objectRemoved", handleObjectRemoved);
+            for (const object of this._scene.objects) {
+                if (object instanceof Splatv) {
+                    if (this._renderData === object.data) {
+                        this._renderData = null;
+                        object.removeEventListener("objectChanged", handleObjectChanged);
+                    }
+                }
+            }
+
+            worker?.terminate();
+
+            gl.deleteTexture(this._splatTexture);
+
+            gl.deleteBuffer(indexBuffer);
+            gl.deleteBuffer(vertexBuffer);
+        };
+    }
+
+    get renderData(): SplatvData | null {
+        return this._renderData;
     }
 
     protected _getVertexSource(): string {

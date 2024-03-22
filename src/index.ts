@@ -23,4 +23,5 @@ export { FadeInPass } from "./renderers/webgl/passes/FadeInPass";
 export { RenderData } from "./renderers/webgl/utils/RenderData";
 export { ShaderProgram } from "./renderers/webgl/programs/ShaderProgram";
 export { RenderProgram } from "./renderers/webgl/programs/RenderProgram";
+export { VideoRenderProgram } from "./renderers/webgl/programs/VideoRenderProgram";
 export { IntersectionTester } from "./renderers/webgl/utils/IntersectionTester";

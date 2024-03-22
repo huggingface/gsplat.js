@@ -5,6 +5,8 @@ const progressDialog = document.getElementById("progress-dialog") as HTMLDialogE
 const progressIndicator = document.getElementById("progress-indicator") as HTMLProgressElement;
 
 const renderer = new SPLAT.WebGLRenderer(canvas);
+renderer.addProgram(new SPLAT.VideoRenderProgram(renderer));
+
 const scene = new SPLAT.Scene();
 const camera = new SPLAT.Camera();
 const controls = new SPLAT.OrbitControls(camera, canvas);
@@ -20,7 +22,7 @@ async function loadSplatv(url: string) {
     }
 
     const handleChunk = (
-        chunk: { size: number; type: string },
+        chunk: { size: number; type: string; texwidth: number; texheight: number },
         buffer: Uint8Array,
         chunks: { size: number; type: string }[],
         remaining: number,
@@ -33,13 +35,38 @@ async function loadSplatv(url: string) {
             chunks.push({ size: intView[1], type: "chunks" });
         } else if (!remaining && chunk.type === "chunks") {
             for (const chunk of JSON.parse(new TextDecoder("utf-8").decode(buffer))) {
+                const cameras = chunk.cameras as { position: number[]; rotation: number[][] }[];
+                if (cameras && cameras.length) {
+                    const cameraData = cameras[0];
+                    const position = new SPLAT.Vector3(
+                        cameraData.position[0],
+                        cameraData.position[1],
+                        cameraData.position[2],
+                    );
+                    const rotation = SPLAT.Quaternion.FromMatrix3(
+                        new SPLAT.Matrix3(
+                            cameraData.rotation[0][0],
+                            cameraData.rotation[0][1],
+                            cameraData.rotation[0][2],
+                            cameraData.rotation[1][0],
+                            cameraData.rotation[1][1],
+                            cameraData.rotation[1][2],
+                            cameraData.rotation[2][0],
+                            cameraData.rotation[2][1],
+                            cameraData.rotation[2][2],
+                        ),
+                    );
+                    camera.position = position;
+                    camera.rotation = rotation;
+                    controls.setCameraTarget(camera.position.add(camera.forward.multiply(camera.position.magnitude())));
+                }
                 chunks.push(chunk);
             }
         } else if (chunk.type === "splat") {
             if (remaining) {
                 progressIndicator.value = 100 - (100 * remaining) / chunk.size;
             } else {
-                const data = SPLAT.SplatvData.Deserialize(buffer);
+                const data = SPLAT.SplatvData.Deserialize(buffer, chunk.texwidth, chunk.texheight);
                 const splatv = new SPLAT.Splatv(data);
                 scene.addObject(splatv);
             }
@@ -48,8 +75,10 @@ async function loadSplatv(url: string) {
 
     const reader = req.body!.getReader();
 
-    const chunks: { size: number; type: string }[] = [{ size: 8, type: "magic" }];
-    let chunk: { size: number; type: string } | undefined = chunks.shift();
+    const chunks: { size: number; type: string; texwidth: number; texheight: number }[] = [
+        { size: 8, type: "magic", texwidth: 0, texheight: 0 },
+    ];
+    let chunk: { size: number; type: string; texwidth: number; texheight: number } | undefined = chunks.shift();
     let buffer = new Uint8Array(chunk!.size);
     let offset = 0;
     while (chunk) {

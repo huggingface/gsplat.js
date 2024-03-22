@@ -4,10 +4,10 @@ import { SplatvData } from "./SplatvData";
 class Splatv extends Object3D {
     private _data: SplatvData;
 
-    constructor(splat: SplatvData | undefined = undefined) {
+    constructor(splat: SplatvData) {
         super();
 
-        this._data = splat || new SplatvData();
+        this._data = splat;
     }
 
     get data() {
