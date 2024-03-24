@@ -115,8 +115,8 @@ const throttledSort = () => {
         sorting = true;
         runSort();
         setTimeout(() => {
-            throttledSort();
             sorting = false;
+            throttledSort();
         });
     }
 };
