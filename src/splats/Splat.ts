@@ -69,7 +69,7 @@ class Splat extends Object3D {
             name = `splat-${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}.${format}`;
         }
 
-        let splatClone = this.clone();
+        const splatClone = this.clone();
 
         splatClone.applyRotation();
         splatClone.applyScale();

@@ -11,7 +11,7 @@ class Scene extends EventDispatcher {
     addObject: (object: Object3D) => void;
     removeObject: (object: Object3D) => void;
     findObject: (predicate: (object: Object3D) => boolean) => Object3D | undefined;
-    findObjectOfType: <T extends Object3D>(type: { new(): T }) => T | undefined;
+    findObjectOfType: <T extends Object3D>(type: { new (): T }) => T | undefined;
     reset: () => void;
 
     constructor() {
@@ -40,7 +40,7 @@ class Scene extends EventDispatcher {
             return undefined;
         };
 
-        this.findObjectOfType = <T extends Object3D>(type: { new(): T }) => {
+        this.findObjectOfType = <T extends Object3D>(type: { new (): T }) => {
             for (const object of this.objects) {
                 if (object instanceof type) {
                     return object;
@@ -89,7 +89,6 @@ class Scene extends EventDispatcher {
         }
 
         return mergedSplatData.buffer;
-
     }
 
     saveToFile(name: string | null = null, format: "splat" | "ply" = "splat") {
@@ -102,7 +101,7 @@ class Scene extends EventDispatcher {
 
         const mergedData = this.getMergedSceneDataBuffer(format);
 
-        let blob = new Blob([mergedData], { type: "application/octet-stream" });
+        const blob = new Blob([mergedData], { type: "application/octet-stream" });
 
         const link = document.createElement("a");
         link.download = name;
