@@ -330,10 +330,6 @@ class RenderProgram extends ShaderProgram {
                 return;
             }
 
-            if (this.renderData.vertexCount === 0) {
-                return;
-            }
-
             if (this.renderData.needsRebuild) {
                 this.renderData.rebuild();
             }
