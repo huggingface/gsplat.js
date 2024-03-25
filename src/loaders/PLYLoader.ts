@@ -90,6 +90,7 @@ class PLYLoader {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const [_p, type, name] = prop.split(" ");
             properties.push({ name, type, offset: rowOffset });
+            console.log(name, type, rowOffset);
             if (!offsets[type]) throw new Error(`Unsupported property type: ${type}`);
             rowOffset += offsets[type];
         }
@@ -134,12 +135,15 @@ class PLYLoader {
                         position[2] = value;
                         break;
                     case "scale_0":
+                    case "scaling_0":
                         scale[0] = Math.exp(value);
                         break;
                     case "scale_1":
+                    case "scaling_1":
                         scale[1] = Math.exp(value);
                         break;
                     case "scale_2":
+                    case "scaling_2":
                         scale[2] = Math.exp(value);
                         break;
                     case "red":
@@ -152,30 +156,38 @@ class PLYLoader {
                         rgba[2] = value;
                         break;
                     case "f_dc_0":
+                    case "features_0":
                         rgba[0] = (0.5 + Converter.SH_C0 * value) * 255;
                         break;
                     case "f_dc_1":
+                    case "features_1":
                         rgba[1] = (0.5 + Converter.SH_C0 * value) * 255;
                         break;
                     case "f_dc_2":
+                    case "features_2":
                         rgba[2] = (0.5 + Converter.SH_C0 * value) * 255;
                         break;
                     case "f_dc_3":
                         rgba[3] = (0.5 + Converter.SH_C0 * value) * 255;
                         break;
                     case "opacity":
+                    case "opacity_0":
                         rgba[3] = (1 / (1 + Math.exp(-value))) * 255;
                         break;
                     case "rot_0":
+                    case "rotation_0":
                         r0 = value;
                         break;
                     case "rot_1":
+                    case "rotation_1":
                         r1 = value;
                         break;
                     case "rot_2":
+                    case "rotation_2":
                         r2 = value;
                         break;
                     case "rot_3":
+                    case "rotation_3":
                         r3 = value;
                         break;
                 }
