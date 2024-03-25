@@ -198,6 +198,16 @@ class SplatData {
     get selection() {
         return this._selection;
     }
+
+    clone() {
+        return new SplatData(
+            this.vertexCount,
+            new Float32Array(this.positions),
+            new Float32Array(this.rotations),
+            new Float32Array(this.scales),
+            new Uint8Array(this.colors),
+        );
+    }
 }
 
 export { SplatData };

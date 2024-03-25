@@ -11,7 +11,7 @@ class Scene extends EventDispatcher {
     addObject: (object: Object3D) => void;
     removeObject: (object: Object3D) => void;
     findObject: (predicate: (object: Object3D) => boolean) => Object3D | undefined;
-    findObjectOfType: <T extends Object3D>(type: { new (): T }) => T | undefined;
+    findObjectOfType: <T extends Object3D>(type: { new(): T }) => T | undefined;
     reset: () => void;
 
     constructor() {
@@ -40,7 +40,7 @@ class Scene extends EventDispatcher {
             return undefined;
         };
 
-        this.findObjectOfType = <T extends Object3D>(type: { new (): T }) => {
+        this.findObjectOfType = <T extends Object3D>(type: { new(): T }) => {
             for (const object of this.objects) {
                 if (object instanceof type) {
                     return object;
@@ -59,48 +59,50 @@ class Scene extends EventDispatcher {
         this.reset();
     }
 
-    saveToFile(name: string | null = null, format: string | null = null) {
-        if (!document) return;
+    getMergedSceneDataBuffer(format: "splat" | "ply" = "splat"): ArrayBuffer {
+        const buffers: Uint8Array[] = [];
+        let vertexCount = 0;
 
-        if (!format) {
-            format = "splat";
-        } else if (format !== "splat" && format !== "ply") {
-            throw new Error("Invalid format. Must be 'splat' or 'ply'");
+        for (const object of this.objects) {
+            if (object instanceof Splat) {
+                const splatClone = object.clone() as Splat;
+
+                splatClone.applyRotation();
+                splatClone.applyScale();
+                splatClone.applyPosition();
+                const buffer = splatClone.data.serialize();
+
+                buffers.push(buffer);
+                vertexCount += splatClone.data.vertexCount;
+            }
         }
+
+        const mergedSplatData = new Uint8Array(vertexCount * SplatData.RowLength);
+        let offset = 0;
+        for (const buffer of buffers) {
+            mergedSplatData.set(buffer, offset);
+            offset += buffer.length;
+        }
+
+        if (format === "ply") {
+            return Converter.SplatToPLY(mergedSplatData.buffer, vertexCount);
+        }
+
+        return mergedSplatData.buffer;
+
+    }
+
+    saveToFile(name: string | null = null, format: "splat" | "ply" = "splat") {
+        if (!document) return;
 
         if (!name) {
             const now = new Date();
             name = `scene-${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}.${format}`;
         }
 
-        const buffers: Uint8Array[] = [];
-        let vertexCount = 0;
+        const mergedData = this.getMergedSceneDataBuffer(format);
 
-        for (const object of this.objects) {
-            object.applyRotation();
-            object.applyScale();
-            object.applyPosition();
-            if (object instanceof Splat) {
-                const buffer = object.data.serialize();
-                buffers.push(buffer);
-                vertexCount += object.data.vertexCount;
-            }
-        }
-
-        const data = new Uint8Array(vertexCount * SplatData.RowLength);
-        let offset = 0;
-        for (const buffer of buffers) {
-            data.set(buffer, offset);
-            offset += buffer.length;
-        }
-
-        let blob;
-        if (format === "ply") {
-            const plyData = Converter.SplatToPLY(data.buffer, vertexCount);
-            blob = new Blob([plyData], { type: "application/octet-stream" });
-        } else {
-            blob = new Blob([data.buffer], { type: "application/octet-stream" });
-        }
+        let blob = new Blob([mergedData], { type: "application/octet-stream" });
 
         const link = document.createElement("a");
         link.download = name;

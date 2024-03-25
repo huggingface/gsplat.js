@@ -61,28 +61,24 @@ class Splat extends Object3D {
         this.recalculateBounds();
     }
 
-    saveToFile(name: string | null = null, format: string | null = null) {
+    saveToFile(name: string | null = null, format: "splat" | "ply" = "splat") {
         if (!document) return;
-
-        if (!format) {
-            format = "splat";
-        } else if (format !== "splat" && format !== "ply") {
-            throw new Error("Invalid format. Must be 'splat' or 'ply'");
-        }
 
         if (!name) {
             const now = new Date();
             name = `splat-${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}.${format}`;
         }
 
-        this.applyRotation();
-        this.applyScale();
-        this.applyPosition();
+        let splatClone = this.clone();
 
-        const data = this.data.serialize();
+        splatClone.applyRotation();
+        splatClone.applyScale();
+        splatClone.applyPosition();
+
+        const data = splatClone.data.serialize();
         let blob;
         if (format === "ply") {
-            const plyData = Converter.SplatToPLY(data.buffer, this.data.vertexCount);
+            const plyData = Converter.SplatToPLY(data.buffer, splatClone.data.vertexCount);
             blob = new Blob([plyData], { type: "application/octet-stream" });
         } else {
             blob = new Blob([data.buffer], { type: "application/octet-stream" });
@@ -126,6 +122,14 @@ class Splat extends Object3D {
         size = size.multiply(this.scale);
 
         return new Box3(center.subtract(size.divide(2)), center.add(size.divide(2)));
+    }
+
+    clone() {
+        const splat = new Splat(this.data.clone());
+        splat.position = this.position.clone();
+        splat.rotation = this.rotation.clone();
+        splat.scale = this.scale.clone();
+        return splat;
     }
 }
 
