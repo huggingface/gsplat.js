@@ -123,12 +123,20 @@ const throttledSort = () => {
 
 self.onmessage = (e) => {
     if (e.data.sortData) {
-        sortData = {
-            positions: Float32Array.from(e.data.sortData.positions),
-            transforms: Float32Array.from(e.data.sortData.transforms),
-            transformIndices: Uint32Array.from(e.data.sortData.transformIndices),
-            vertexCount: e.data.sortData.vertexCount,
-        };
+        //Recreating the typed arrays every time, will cause firefox to leak memory
+        if (!sortData) {
+            sortData = {
+                positions: new Float32Array(e.data.sortData.positions),
+                transforms: new Float32Array(e.data.sortData.transforms),
+                transformIndices: new Uint32Array(e.data.sortData.transformIndices),
+                vertexCount: e.data.sortData.vertexCount,
+            };
+        } else {
+            sortData.positions.set(e.data.sortData.positions);
+            sortData.transforms.set(e.data.sortData.transforms);
+            sortData.transformIndices.set(e.data.sortData.transformIndices);
+            sortData.vertexCount = e.data.sortData.vertexCount;
+        }
         allocateBuffers();
     }
     if (e.data.viewProj) {

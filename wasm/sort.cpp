@@ -19,38 +19,14 @@ void sort(float *viewProj, float *transforms, uint32_t *transformIndices, uint32
         if (transformIndex != previousTransformIndex) {
             previousTransformIndex = transformIndex;
             float *transform = &transforms[20 * transformIndex];
-            viewTransform[0] = transform[0] * viewProj[0] + transform[1] * viewProj[4] + transform[2] * viewProj[8] +
-                               transform[3] * viewProj[12];
-            viewTransform[1] = transform[0] * viewProj[1] + transform[1] * viewProj[5] + transform[2] * viewProj[9] +
-                               transform[3] * viewProj[13];
             viewTransform[2] = transform[0] * viewProj[2] + transform[1] * viewProj[6] + transform[2] * viewProj[10] +
                                transform[3] * viewProj[14];
-            viewTransform[3] = transform[0] * viewProj[3] + transform[1] * viewProj[7] + transform[2] * viewProj[11] +
-                               transform[3] * viewProj[15];
-            viewTransform[4] = transform[4] * viewProj[0] + transform[5] * viewProj[4] + transform[6] * viewProj[8] +
-                               transform[7] * viewProj[12];
-            viewTransform[5] = transform[4] * viewProj[1] + transform[5] * viewProj[5] + transform[6] * viewProj[9] +
-                               transform[7] * viewProj[13];
             viewTransform[6] = transform[4] * viewProj[2] + transform[5] * viewProj[6] + transform[6] * viewProj[10] +
                                transform[7] * viewProj[14];
-            viewTransform[7] = transform[4] * viewProj[3] + transform[5] * viewProj[7] + transform[6] * viewProj[11] +
-                               transform[7] * viewProj[15];
-            viewTransform[8] = transform[8] * viewProj[0] + transform[9] * viewProj[4] + transform[10] * viewProj[8] +
-                               transform[11] * viewProj[12];
-            viewTransform[9] = transform[8] * viewProj[1] + transform[9] * viewProj[5] + transform[10] * viewProj[9] +
-                               transform[11] * viewProj[13];
             viewTransform[10] = transform[8] * viewProj[2] + transform[9] * viewProj[6] + transform[10] * viewProj[10] +
                                 transform[11] * viewProj[14];
-            viewTransform[11] = transform[8] * viewProj[3] + transform[9] * viewProj[7] + transform[10] * viewProj[11] +
-                                transform[11] * viewProj[15];
-            viewTransform[12] = transform[12] * viewProj[0] + transform[13] * viewProj[4] + transform[14] * viewProj[8] +
-                                transform[15] * viewProj[12];
-            viewTransform[13] = transform[12] * viewProj[1] + transform[13] * viewProj[5] + transform[14] * viewProj[9] +
-                                transform[15] * viewProj[13];
             viewTransform[14] = transform[12] * viewProj[2] + transform[13] * viewProj[6] + transform[14] * viewProj[10] +
                                 transform[15] * viewProj[14];
-            viewTransform[15] = transform[12] * viewProj[3] + transform[13] * viewProj[7] + transform[14] * viewProj[11] +
-                                transform[15] * viewProj[15];
         }
 
         float projectedZ = viewTransform[2] * x + viewTransform[6] * y + viewTransform[10] * z + viewTransform[14];
