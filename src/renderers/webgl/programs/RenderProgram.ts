@@ -7,7 +7,7 @@ import { Color32 } from "../../../math/Color32";
 import { ObjectAddedEvent, ObjectChangedEvent, ObjectRemovedEvent } from "../../../events/Events";
 import { Splat } from "../../../splats/Splat";
 import { WebGLRenderer } from "../../WebGLRenderer";
-import { Scene } from "../../../index";
+import { Scene } from "../../../core/Scene"
 
 const vertexShaderSource = /* glsl */ `#version 300 es
 precision highp float;
