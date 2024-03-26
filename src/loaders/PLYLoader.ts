@@ -90,7 +90,7 @@ class PLYLoader {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const [_p, type, name] = prop.split(" ");
             properties.push({ name, type, offset: rowOffset });
-            console.log(name, type, rowOffset);
+            
             if (!offsets[type]) throw new Error(`Unsupported property type: ${type}`);
             rowOffset += offsets[type];
         }
