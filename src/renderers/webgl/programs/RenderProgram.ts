@@ -7,6 +7,7 @@ import { Color32 } from "../../../math/Color32";
 import { ObjectAddedEvent, ObjectChangedEvent, ObjectRemovedEvent } from "../../../events/Events";
 import { Splat } from "../../../splats/Splat";
 import { WebGLRenderer } from "../../WebGLRenderer";
+import { Scene } from "../../../core/Scene"
 
 const vertexShaderSource = /* glsl */ `#version 300 es
 precision highp float;
@@ -303,7 +304,7 @@ class RenderProgram extends ShaderProgram {
                 e.object.addEventListener("objectChanged", handleObjectChanged);
             }
 
-            this.dispose();
+            resetSplatData();
         };
 
         const handleObjectRemoved = (event: Event) => {
@@ -313,7 +314,7 @@ class RenderProgram extends ShaderProgram {
                 e.object.removeEventListener("objectChanged", handleObjectChanged);
             }
 
-            this.dispose();
+            resetSplatData();
         };
 
         const handleObjectChanged = (event: Event) => {
@@ -322,6 +323,14 @@ class RenderProgram extends ShaderProgram {
             if (e.object instanceof Splat && this._renderData) {
                 this._renderData.markDirty(e.object);
             }
+        };
+
+        const resetSplatData = () => {
+            this._renderData?.dispose();
+            this._renderData = new RenderData(this._scene as Scene);
+
+            this._worker?.terminate();
+            createWorker();
         };
 
         this._render = () => {
@@ -478,7 +487,7 @@ class RenderProgram extends ShaderProgram {
             gl.vertexAttribIPointer(indexAttribute, 1, gl.INT, 0, 0);
             gl.vertexAttribDivisor(indexAttribute, 1);
 
-            gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, this.renderData.vertexCount);
+            gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, this.depthIndex.length);
         };
 
         this._dispose = () => {
