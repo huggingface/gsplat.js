@@ -25,8 +25,9 @@ let countsPtr: number;
 
 let allocatedVertexCount: number = 0;
 let allocatedTransformCount: number = 0;
-let viewProj: Float32Array = new Float32Array(16);
+let viewProj: number[] = [];
 
+let dirty = true;
 let lock = false;
 let allocationPending = false;
 let sorting = false;
@@ -88,7 +89,7 @@ const runSort = () => {
     wasmModule.HEAPF32.set(sortData.positions, positionsPtr / 4);
     wasmModule.HEAPF32.set(sortData.transforms, transformsPtr / 4);
     wasmModule.HEAPU32.set(sortData.transformIndices, transformIndicesPtr / 4);
-    wasmModule.HEAPF32.set(viewProj, viewProjPtr / 4);
+    wasmModule.HEAPF32.set(new Float32Array(viewProj), viewProjPtr / 4);
 
     wasmModule._sort(
         viewProjPtr,
@@ -108,12 +109,14 @@ const runSort = () => {
     self.postMessage({ depthIndex: detachedDepthIndex }, [detachedDepthIndex.buffer]);
 
     lock = false;
+    dirty = false;
 };
 
 const throttledSort = () => {
     if (!sorting) {
         sorting = true;
-        runSort();
+        if (dirty) runSort();
+
         setTimeout(() => {
             sorting = false;
             throttledSort();
@@ -137,10 +140,16 @@ self.onmessage = (e) => {
             sortData.transformIndices.set(e.data.sortData.transformIndices);
             sortData.vertexCount = e.data.sortData.vertexCount;
         }
+
+        dirty = true;
         allocateBuffers();
     }
     if (e.data.viewProj) {
-        viewProj = Float32Array.from(e.data.viewProj);
+        if ((e.data.viewProj as number[]).every((item) => viewProj.includes(item)) === false) {
+            viewProj = e.data.viewProj;
+            dirty = true;
+        }
+
         throttledSort();
     }
 };
