@@ -28,7 +28,6 @@ let allocatedTransformCount: number = 0;
 let viewProj: number[] = [];
 
 let dirty = true;
-
 let lock = false;
 let allocationPending = false;
 let sorting = false;
@@ -111,7 +110,6 @@ const runSort = () => {
 
     lock = false;
     dirty = false;
-    console.log("sort done");
 };
 
 const throttledSort = () => {
