@@ -39,8 +39,9 @@ bower_components
 build/Release
 
 # Dependency directories
-node_modules/
 jspm_packages/
+**/node_modules/
+**/package-lock.json
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
@@ -132,3 +133,5 @@ dist
 # IDE
 .vscode/
 playground/
+.venv/
+.claude/

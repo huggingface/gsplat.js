@@ -1,14 +1,24 @@
 {
     "name": "gsplat",
-    "version": "1.2.7",
+    "version": "1.2.4",
     "description": "JavaScript Gaussian Splatting library",
-    "main": "dist/index.js",
+    "main": "dist/index.es.js",
+    "module": "dist/index.es.js",
     "types": "dist/index.d.ts",
     "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.es.js",
+            "default": "./dist/index.es.js"
+        }
+    },
     "scripts": {
         "build:wasm": "sh ./compile_wasm.sh",
-        "copy:wasm": "ncp ./src/wasm ./dist/wasm",
-        "build": "npm run build:wasm && rollup -c && npm run copy:wasm",
+        "copy:wasm": "mkdir -p dist/wasm && cp src/wasm/*.wasm dist/wasm/ 2>/dev/null || true",
+        "build": "npm run build:wasm && vite build && npm run copy:wasm",
+        "dev": "vite",
+        "preview": "vite preview",
         "test": "jest --passWithNoTests",
         "lint": "eslint \"src/**/*.ts\" \"examples/**/*.ts\"",
         "format": "prettier --write \"src/**/*.ts\" \"examples/**/*.ts\""
@@ -31,26 +41,21 @@
     },
     "homepage": "https://github.com/dylanebert/splat.js#readme",
     "devDependencies": {
-        "@jest/globals": "^29.7.0",
-        "@rollup/plugin-commonjs": "^25.0.7",
-        "@rollup/plugin-node-resolve": "^15.2.3",
-        "@rollup/plugin-replace": "^5.0.5",
-        "@rollup/plugin-terser": "^0.4.4",
-        "@rollup/plugin-typescript": "^11.1.5",
-        "@types/jest": "^29.5.8",
-        "@types/node": "^20.8.10",
-        "@typescript-eslint/eslint-plugin": "^6.9.1",
-        "@typescript-eslint/parser": "^6.9.1",
-        "eslint": "^8.52.0",
-        "eslint-config-prettier": "^9.0.0",
-        "eslint-plugin-prettier": "^5.0.1",
-        "jest": "^29.7.0",
-        "ncp": "^2.0.0",
-        "prettier": "^3.0.3",
-        "rollup": "^4.3.0",
-        "rollup-plugin-web-worker-loader": "^1.6.1",
-        "ts-jest": "^29.1.1",
-        "typescript": "^5.2.2"
+        "@jest/globals": "^30.0.4",
+        "@types/node": "^24.0.13",
+        "@typescript-eslint/eslint-plugin": "^8.36.0",
+        "@typescript-eslint/parser": "^8.36.0",
+        "eslint": "^9.31.0",
+        "eslint-config-prettier": "^10.1.5",
+        "eslint-plugin-prettier": "^5.5.1",
+        "glob": "^11.0.3",
+        "prettier": "^3.6.2",
+        "tslib": "^2.8.1",
+        "typescript": "^5.7.2",
+        "vite": "^5.0.0",
+        "vite-plugin-dts": "^4.3.0",
+        "vite-plugin-top-level-await": "^1.5.0",
+        "vite-plugin-wasm": "^3.5.0"
     },
     "files": [
         "dist/**/*"
