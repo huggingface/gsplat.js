@@ -13,10 +13,11 @@ class PLYLoader {
         onProgress?: (progress: number) => void,
         format: string = "",
         useCache: boolean = false,
+        abortController?: AbortController
     ): Promise<Splat> {
-        const res: Response = await initiateFetchRequest(url, useCache);
+        const res: Response = await initiateFetchRequest(url, useCache, abortController);
 
-        const plyData = await loadRequestDataIntoBuffer(res, onProgress);
+        const plyData = await loadRequestDataIntoBuffer(res, onProgress, abortController);
 
         if (plyData[0] !== 112 || plyData[1] !== 108 || plyData[2] !== 121 || plyData[3] !== 10) {
             throw new Error("Invalid PLY file");
