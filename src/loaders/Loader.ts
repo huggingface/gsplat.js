@@ -9,10 +9,11 @@ class Loader {
         scene: Scene,
         onProgress?: (progress: number) => void,
         useCache: boolean = false,
+        abortController?: AbortController
     ): Promise<Splat> {
-        const res: Response = await initiateFetchRequest(url, useCache);
+        const res: Response = await initiateFetchRequest(url, useCache, abortController);
 
-        const buffer = await loadRequestDataIntoBuffer(res, onProgress);
+        const buffer = await loadRequestDataIntoBuffer(res, onProgress, abortController);
         return this.LoadFromArrayBuffer(buffer, scene);
     }
 
