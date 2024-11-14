@@ -12,17 +12,9 @@ class Vector3 {
     }
 
     equals(v: Vector3): boolean {
-        if (this.x !== v.x) {
-            return false;
-        }
-        if (this.y !== v.y) {
-            return false;
-        }
-        if (this.z !== v.z) {
-            return false;
-        }
+        const { x, y, z } = v;
 
-        return true;
+        return this.x == x && this.y === y && this.z == z;
     }
 
     add(v: number): Vector3;
@@ -30,9 +22,9 @@ class Vector3 {
     add(v: number | Vector3): Vector3 {
         if (typeof v === "number") {
             return new Vector3(this.x + v, this.y + v, this.z + v);
-        } else {
-            return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z);
         }
+
+        return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z);
     }
 
     subtract(v: number): Vector3;
@@ -40,26 +32,31 @@ class Vector3 {
     subtract(v: number | Vector3): Vector3 {
         if (typeof v === "number") {
             return new Vector3(this.x - v, this.y - v, this.z - v);
-        } else {
-            return new Vector3(this.x - v.x, this.y - v.y, this.z - v.z);
         }
+
+        return new Vector3(this.x - v.x, this.y - v.y, this.z - v.z);
     }
 
     multiply(v: number): Vector3;
     multiply(v: Vector3): Vector3;
     multiply(v: Matrix4): Vector3;
     multiply(v: number | Vector3 | Matrix4): Vector3 {
-        if (typeof v === "number") {
+        const isValueNumber = typeof v === "number";
+        const isValueVector3 = v instanceof Vector3;
+
+        if (isValueNumber) {
             return new Vector3(this.x * v, this.y * v, this.z * v);
-        } else if (v instanceof Vector3) {
-            return new Vector3(this.x * v.x, this.y * v.y, this.z * v.z);
-        } else {
-            return new Vector3(
-                this.x * v.buffer[0] + this.y * v.buffer[4] + this.z * v.buffer[8] + v.buffer[12],
-                this.x * v.buffer[1] + this.y * v.buffer[5] + this.z * v.buffer[9] + v.buffer[13],
-                this.x * v.buffer[2] + this.y * v.buffer[6] + this.z * v.buffer[10] + v.buffer[14],
-            );
         }
+
+        if (isValueVector3) {
+            return new Vector3(this.x * v.x, this.y * v.y, this.z * v.z);
+        }
+
+        return new Vector3(
+            this.x * v.buffer[0] + this.y * v.buffer[4] + this.z * v.buffer[8] + v.buffer[12],
+            this.x * v.buffer[1] + this.y * v.buffer[5] + this.z * v.buffer[9] + v.buffer[13],
+            this.x * v.buffer[2] + this.y * v.buffer[6] + this.z * v.buffer[10] + v.buffer[14],
+        );
     }
 
     divide(v: number): Vector3;
@@ -67,9 +64,9 @@ class Vector3 {
     divide(v: number | Vector3): Vector3 {
         if (typeof v === "number") {
             return new Vector3(this.x / v, this.y / v, this.z / v);
-        } else {
-            return new Vector3(this.x / v.x, this.y / v.y, this.z / v.z);
         }
+
+        return new Vector3(this.x / v.x, this.y / v.y, this.z / v.z);
     }
 
     cross(v: Vector3): Vector3 {
@@ -97,36 +94,43 @@ class Vector3 {
     }
 
     getComponent(axis: number) {
-        switch (axis) {
-            case 0:
-                return this.x;
-            case 1:
-                return this.y;
-            case 2:
-                return this.z;
-            default:
-                throw new Error(`Invalid component index: ${axis}`);
-        }
+        const axisMapValue = {
+            0: () => this.x,
+            1: () => this.y,
+            2: () => this.z,
+        };
+
+        const hasAxis = axis in axisMapValue;
+
+        if (!hasAxis) throw new Error(`Invalid component index: ${axis}`);
+
+        const axisMapKey = axis as keyof typeof axisMapValue;
+
+        return axisMapValue[axisMapKey]();
     }
 
     minComponent(): number {
         if (this.x < this.y && this.x < this.z) {
             return 0;
-        } else if (this.y < this.z) {
-            return 1;
-        } else {
-            return 2;
         }
+
+        if (this.y < this.z) {
+            return 1;
+        }
+
+        return 2;
     }
 
     maxComponent(): number {
         if (this.x > this.y && this.x > this.z) {
             return 0;
-        } else if (this.y > this.z) {
-            return 1;
-        } else {
-            return 2;
         }
+
+        if (this.y > this.z) {
+            return 1;
+        }
+
+        return 2;
     }
 
     magnitude(): number {
