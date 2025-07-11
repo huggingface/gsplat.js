@@ -12,10 +12,7 @@ export async function initiateFetchRequest(url: string, useCache: boolean): Prom
     return req;
 }
 
-export async function loadDataBuffer(
-    res: Response,
-    onProgress?: (progress: number) => void,
-): Promise<Uint8Array> {
+export async function loadDataBuffer(res: Response, onProgress?: (progress: number) => void): Promise<Uint8Array> {
     const reader = res.body!.getReader();
 
     const chunks = [];
