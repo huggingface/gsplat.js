@@ -12,28 +12,7 @@ export async function initiateFetchRequest(url: string, useCache: boolean): Prom
     return req;
 }
 
-export async function loadDataIntoBuffer(res: Response, onProgress?: (progress: number) => void): Promise<Uint8Array> {
-    const reader = res.body!.getReader();
-
-    const contentLength = parseInt(res.headers.get("content-length") as string);
-    const buffer = new Uint8Array(contentLength);
-
-    let bytesRead = 0;
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer.set(value, bytesRead);
-        bytesRead += value.length;
-        onProgress?.(bytesRead / contentLength);
-    }
-
-    return buffer;
-}
-
-export async function loadChunkedDataIntoBuffer(
+export async function loadDataBuffer(
     res: Response,
     onProgress?: (progress: number) => void,
 ): Promise<Uint8Array> {
@@ -60,20 +39,4 @@ export async function loadChunkedDataIntoBuffer(
     }
 
     return buffer;
-}
-
-export async function loadRequestDataIntoBuffer(
-    res: Response,
-    onProgress?: (progress: number) => void,
-): Promise<Uint8Array> {
-    const contentEncoding = res.headers.get("content-encoding");
-    const isCompressed =
-        contentEncoding &&
-        (contentEncoding.includes("br") || contentEncoding.includes("gzip") || contentEncoding.includes("deflate"));
-
-    if (res.headers.has("content-length") && !isCompressed) {
-        return loadDataIntoBuffer(res, onProgress);
-    } else {
-        return loadChunkedDataIntoBuffer(res, onProgress);
-    }
 }

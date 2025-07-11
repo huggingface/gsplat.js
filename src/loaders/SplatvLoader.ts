@@ -5,7 +5,7 @@ import { Quaternion } from "../math/Quaternion";
 import { Vector3 } from "../math/Vector3";
 import { Splatv } from "../splats/Splatv";
 import { SplatvData } from "../splats/SplatvData";
-import { initiateFetchRequest, loadRequestDataIntoBuffer } from "../utils/LoaderUtils";
+import { initiateFetchRequest, loadDataBuffer } from "../utils/LoaderUtils";
 
 class SplatvLoader {
     static async LoadAsync(
@@ -17,7 +17,7 @@ class SplatvLoader {
     ): Promise<Splatv> {
         const res: Response = await initiateFetchRequest(url, useCache);
 
-        const buffer = await loadRequestDataIntoBuffer(res, onProgress);
+        const buffer = await loadDataBuffer(res, onProgress);
         return this._ParseSplatvBuffer(buffer.buffer, scene, camera);
     }
 

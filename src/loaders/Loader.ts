@@ -1,7 +1,7 @@
 import type { Scene } from "../core/Scene";
 import { Splat } from "../splats/Splat";
 import { SplatData } from "../splats/SplatData";
-import { initiateFetchRequest, loadRequestDataIntoBuffer } from "../utils/LoaderUtils";
+import { initiateFetchRequest, loadDataBuffer } from "../utils/LoaderUtils";
 
 class Loader {
     static async LoadAsync(
@@ -12,7 +12,7 @@ class Loader {
     ): Promise<Splat> {
         const res: Response = await initiateFetchRequest(url, useCache);
 
-        const buffer = await loadRequestDataIntoBuffer(res, onProgress);
+        const buffer = await loadDataBuffer(res, onProgress);
         return this.LoadFromArrayBuffer(buffer, scene);
     }
 
