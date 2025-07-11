@@ -66,7 +66,12 @@ export async function loadRequestDataIntoBuffer(
     res: Response,
     onProgress?: (progress: number) => void,
 ): Promise<Uint8Array> {
-    if (res.headers.has("content-length")) {
+    const contentEncoding = res.headers.get("content-encoding");
+    const isCompressed =
+        contentEncoding &&
+        (contentEncoding.includes("br") || contentEncoding.includes("gzip") || contentEncoding.includes("deflate"));
+
+    if (res.headers.has("content-length") && !isCompressed) {
         return loadDataIntoBuffer(res, onProgress);
     } else {
         return loadChunkedDataIntoBuffer(res, onProgress);
