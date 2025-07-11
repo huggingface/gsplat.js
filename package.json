@@ -1,6 +1,6 @@
 {
     "name": "gsplat",
-    "version": "1.2.4",
+    "version": "1.2.7",
     "description": "JavaScript Gaussian Splatting library",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
