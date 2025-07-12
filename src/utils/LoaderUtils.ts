@@ -14,40 +14,25 @@ export async function initiateFetchRequest(url: string, useCache: boolean): Prom
 
 export async function loadDataIntoBuffer(res: Response, onProgress?: (progress: number) => void): Promise<Uint8Array> {
     const reader = res.body!.getReader();
-
-    const contentLength = parseInt(res.headers.get("content-length") as string);
-    const buffer = new Uint8Array(contentLength);
-
-    let bytesRead = 0;
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer.set(value, bytesRead);
-        bytesRead += value.length;
-        onProgress?.(bytesRead / contentLength);
-    }
-
-    return buffer;
-}
-
-export async function loadChunkedDataIntoBuffer(
-    res: Response,
-    onProgress?: (progress: number) => void,
-): Promise<Uint8Array> {
-    const reader = res.body!.getReader();
+    const contentLength = res.headers.get("content-length");
+    const estimatedBytes = contentLength && !isNaN(parseInt(contentLength)) ? parseInt(contentLength) : undefined;
 
     const chunks = [];
     let receivedLength = 0;
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         chunks.push(value);
         receivedLength += value.length;
+
+        if (onProgress && estimatedBytes) {
+            // Cap progress at 95% to account for inaccurate content-length (compression, etc.)
+            const rawProgress = receivedLength / estimatedBytes;
+            const cappedProgress = Math.min(rawProgress * 0.95, 0.95);
+            onProgress(cappedProgress);
+        }
     }
 
     const buffer = new Uint8Array(receivedLength);
@@ -55,20 +40,12 @@ export async function loadChunkedDataIntoBuffer(
     for (const chunk of chunks) {
         buffer.set(chunk, position);
         position += chunk.length;
+    }
 
-        onProgress?.(position / receivedLength);
+    // Always send final 100% progress when complete
+    if (onProgress) {
+        onProgress(1.0);
     }
 
     return buffer;
-}
-
-export async function loadRequestDataIntoBuffer(
-    res: Response,
-    onProgress?: (progress: number) => void,
-): Promise<Uint8Array> {
-    if (res.headers.has("content-length")) {
-        return loadDataIntoBuffer(res, onProgress);
-    } else {
-        return loadChunkedDataIntoBuffer(res, onProgress);
-    }
 }

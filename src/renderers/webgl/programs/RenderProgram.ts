@@ -1,4 +1,5 @@
-import SortWorker from "web-worker:../utils/SortWorker.ts";
+import SortWorker from "../utils/SortWorker.ts?worker&inline";
+const createSortWorker = () => new SortWorker();
 
 import { ShaderProgram } from "./ShaderProgram";
 import { ShaderPass } from "../passes/ShaderPass";
@@ -7,7 +8,7 @@ import { Color32 } from "../../../math/Color32";
 import { ObjectAddedEvent, ObjectChangedEvent, ObjectRemovedEvent } from "../../../events/Events";
 import { Splat } from "../../../splats/Splat";
 import { WebGLRenderer } from "../../WebGLRenderer";
-import { Scene } from "../../../core/Scene"
+import { Scene } from "../../../core/Scene";
 
 const vertexShaderSource = /* glsl */ `#version 300 es
 precision highp float;
@@ -217,8 +218,8 @@ class RenderProgram extends ShaderProgram {
         };
 
         const createWorker = () => {
-            this._worker = new SortWorker();
-            this._worker.onmessage = (e) => {
+            this._worker = createSortWorker();
+            this._worker!.onmessage = (e) => {
                 if (e.data.depthIndex) {
                     const { depthIndex } = e.data;
                     this._depthIndex = depthIndex;

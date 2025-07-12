@@ -1,7 +1,8 @@
 import { Scene } from "../../../core/Scene";
 import { Splat } from "../../../splats/Splat";
-import DataWorker from "web-worker:./DataWorker.ts";
-import loadWasm from "../../../wasm/data";
+import DataWorker from "./DataWorker.ts?worker&inline";
+const createDataWorker = () => new DataWorker();
+import createDataModule from "../../../wasm/data.js";
 import { Matrix4 } from "../../../math/Matrix4";
 
 class RenderData {
@@ -89,7 +90,7 @@ class RenderData {
         this._rotations = new Float32Array(this.vertexCount * 4);
         this._scales = new Float32Array(this.vertexCount * 3);
 
-        this._worker = new DataWorker();
+        this._worker = createDataWorker();
 
         const updateTransform = (splat: Splat) => {
             const splatIndex = this._splatIndices.get(splat) as number;
@@ -170,11 +171,10 @@ class RenderData {
             }
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let wasmModule: any;
 
         async function initWasm() {
-            wasmModule = await loadWasm();
+            wasmModule = await createDataModule();
         }
 
         initWasm();

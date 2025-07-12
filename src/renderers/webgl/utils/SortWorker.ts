@@ -1,12 +1,6 @@
-import loadWasm from "../../../wasm/sort";
+import createSortModule from "../../../wasm/sort.js";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let wasmModule: any;
-
-async function initWasm() {
-    wasmModule = await loadWasm();
-}
-
 let sortData: {
     positions: Float32Array;
     transforms: Float32Array;
@@ -32,6 +26,16 @@ let lock = false;
 let allocationPending = false;
 let sorting = false;
 
+async function initWasm() {
+    if (!wasmModule) {
+        wasmModule = await createSortModule();
+
+        if (!wasmModule || !wasmModule.HEAPF32 || !wasmModule._sort) {
+            throw new Error("WASM module failed to initialize properly");
+        }
+    }
+}
+
 const allocateBuffers = async () => {
     if (lock) {
         allocationPending = true;
@@ -40,7 +44,9 @@ const allocateBuffers = async () => {
     lock = true;
     allocationPending = false;
 
-    if (!wasmModule) await initWasm();
+    if (!wasmModule) {
+        await initWasm();
+    }
 
     const targetAllocatedVertexCount = Math.pow(2, Math.ceil(Math.log2(sortData.vertexCount)));
     if (allocatedVertexCount < targetAllocatedVertexCount) {
@@ -71,7 +77,6 @@ const allocateBuffers = async () => {
         }
 
         allocatedTransformCount = sortData.transforms.length;
-
         transformsPtr = wasmModule._malloc(allocatedTransformCount * 4);
     }
 
@@ -83,30 +88,55 @@ const allocateBuffers = async () => {
 };
 
 const runSort = () => {
-    if (lock || allocationPending || !wasmModule) return;
+    if (lock || allocationPending || !wasmModule || !sortData) {
+        return;
+    }
     lock = true;
 
-    wasmModule.HEAPF32.set(sortData.positions, positionsPtr / 4);
-    wasmModule.HEAPF32.set(sortData.transforms, transformsPtr / 4);
-    wasmModule.HEAPU32.set(sortData.transformIndices, transformIndicesPtr / 4);
-    wasmModule.HEAPF32.set(new Float32Array(viewProj), viewProjPtr / 4);
+    try {
+        // Validate buffer sizes before setting
+        const heapF32 = wasmModule.HEAPF32;
+        const heapU32 = wasmModule.HEAPU32;
 
-    wasmModule._sort(
-        viewProjPtr,
-        transformsPtr,
-        transformIndicesPtr,
-        sortData.vertexCount,
-        positionsPtr,
-        depthBufferPtr,
-        depthIndexPtr,
-        startsPtr,
-        countsPtr,
-    );
+        if (positionsPtr / 4 + sortData.positions.length > heapF32.length) {
+            throw new Error("Positions buffer overflow");
+        }
+        if (transformsPtr / 4 + sortData.transforms.length > heapF32.length) {
+            throw new Error("Transforms buffer overflow");
+        }
+        if (transformIndicesPtr / 4 + sortData.transformIndices.length > heapU32.length) {
+            throw new Error("Transform indices buffer overflow");
+        }
 
-    const depthIndex = new Uint32Array(wasmModule.HEAPU32.buffer, depthIndexPtr, sortData.vertexCount);
-    const detachedDepthIndex = new Uint32Array(depthIndex.slice().buffer);
+        heapF32.set(sortData.positions, positionsPtr / 4);
+        heapF32.set(sortData.transforms, transformsPtr / 4);
+        heapU32.set(sortData.transformIndices, transformIndicesPtr / 4);
+        heapF32.set(new Float32Array(viewProj), viewProjPtr / 4);
 
-    self.postMessage({ depthIndex: detachedDepthIndex }, [detachedDepthIndex.buffer]);
+        wasmModule._sort(
+            viewProjPtr,
+            transformsPtr,
+            transformIndicesPtr,
+            sortData.vertexCount,
+            positionsPtr,
+            depthBufferPtr,
+            depthIndexPtr,
+            startsPtr,
+            countsPtr,
+        );
+
+        // Validate depth index buffer size
+        if (depthIndexPtr + sortData.vertexCount * 4 > heapU32.buffer.byteLength) {
+            throw new Error("Depth index buffer overflow");
+        }
+
+        const depthIndex = new Uint32Array(heapU32.buffer, depthIndexPtr, sortData.vertexCount);
+        const detachedDepthIndex = new Uint32Array(depthIndex.slice().buffer);
+
+        self.postMessage({ depthIndex: detachedDepthIndex }, [detachedDepthIndex.buffer]);
+    } catch {
+        self.postMessage({ depthIndex: new Uint32Array(0) }, []);
+    }
 
     lock = false;
     dirty = false;
@@ -126,7 +156,6 @@ const throttledSort = () => {
 
 self.onmessage = (e) => {
     if (e.data.sortData) {
-        //Recreating the typed arrays every time, will cause firefox to leak memory
         if (!sortData) {
             sortData = {
                 positions: new Float32Array(e.data.sortData.positions),

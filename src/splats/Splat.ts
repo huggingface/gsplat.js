@@ -78,10 +78,10 @@ class Splat extends Object3D {
         const data = splatClone.data.serialize();
         let blob;
         if (format === "ply") {
-            const plyData = Converter.SplatToPLY(data.buffer, splatClone.data.vertexCount);
+            const plyData = Converter.SplatToPLY(data.buffer as ArrayBuffer, splatClone.data.vertexCount);
             blob = new Blob([plyData], { type: "application/octet-stream" });
         } else {
-            blob = new Blob([data.buffer], { type: "application/octet-stream" });
+            blob = new Blob([data.buffer as ArrayBuffer], { type: "application/octet-stream" });
         }
 
         const link = document.createElement("a");

@@ -4,7 +4,7 @@ import { Quaternion } from "../math/Quaternion";
 import { SplatData } from "../splats/SplatData";
 import { Splat } from "../splats/Splat";
 import { Converter } from "../utils/Converter";
-import { initiateFetchRequest, loadRequestDataIntoBuffer } from "../utils/LoaderUtils";
+import { initiateFetchRequest, loadDataIntoBuffer } from "../utils/LoaderUtils";
 
 class PLYLoader {
     static async LoadAsync(
@@ -16,7 +16,7 @@ class PLYLoader {
     ): Promise<Splat> {
         const res: Response = await initiateFetchRequest(url, useCache);
 
-        const plyData = await loadRequestDataIntoBuffer(res, onProgress);
+        const plyData = await loadDataIntoBuffer(res, onProgress);
 
         if (plyData[0] !== 112 || plyData[1] !== 108 || plyData[2] !== 121 || plyData[3] !== 10) {
             throw new Error("Invalid PLY file");
@@ -49,7 +49,7 @@ class PLYLoader {
     }
 
     static LoadFromArrayBuffer(arrayBuffer: ArrayBufferLike, scene: Scene, format: string = ""): Splat {
-        const buffer = new Uint8Array(this._ParsePLYBuffer(arrayBuffer, format));
+        const buffer = new Uint8Array(this._ParsePLYBuffer(arrayBuffer as ArrayBuffer, format));
         const data = SplatData.Deserialize(buffer);
         const splat = new Splat(data);
         scene.addObject(splat);
@@ -87,10 +87,9 @@ class PLYLoader {
             .slice(0, header_end_index)
             .split("\n")
             .filter((k) => k.startsWith("property "))) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const [_p, type, name] = prop.split(" ");
             properties.push({ name, type, offset: rowOffset });
-            
+
             if (!offsets[type]) throw new Error(`Unsupported property type: ${type}`);
             rowOffset += offsets[type];
         }

@@ -1,10 +1,13 @@
-import loadWasm from "../../../wasm/data";
+import createDataModule from "../../../wasm/data.js";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let wasmModule: any;
 
 async function initWasm() {
-    wasmModule = await loadWasm();
+    wasmModule = await createDataModule();
+
+    if (!wasmModule || !wasmModule.HEAPF32 || !wasmModule._pack) {
+        throw new Error("WASM module failed to initialize properly");
+    }
 }
 
 class Splat {

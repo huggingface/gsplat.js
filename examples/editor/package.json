@@ -11,8 +11,8 @@
     },
     "devDependencies": {
         "serve": "^14.2.1",
-        "typescript": "^5.2.2",
-        "vite": "^5.0.0"
+        "typescript": "^5.8.3",
+        "vite": "^7.0.4"
     },
     "dependencies": {
         "gsplat": "^1.0.6"

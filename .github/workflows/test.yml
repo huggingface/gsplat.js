@@ -1,4 +1,4 @@
-name: Run unit tests
+name: CI
 on: [ pull_request, push ]
 jobs:
   test:
@@ -6,10 +6,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
       - uses: mymindstorm/setup-emsdk@v11
       - name: Verify Emscripten
         run: emcc --version
 
-      - run: npm ci --legacy-peer-deps
-      - run: npm run test
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test  
       - run: npm run build
