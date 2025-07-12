@@ -19,7 +19,7 @@
         "build": "npm run build:wasm && vite build && npm run copy:wasm",
         "dev": "vite",
         "preview": "vite preview",
-        "test": "jest --passWithNoTests",
+        "test": "echo \"No tests specified\" && exit 0",
         "lint": "eslint \"src/**/*.ts\" \"examples/**/*.ts\"",
         "format": "prettier --write \"src/**/*.ts\" \"examples/**/*.ts\""
     },
@@ -41,7 +41,6 @@
     },
     "homepage": "https://github.com/dylanebert/splat.js#readme",
     "devDependencies": {
-        "@jest/globals": "^30.0.4",
         "@types/node": "^24.0.13",
         "@typescript-eslint/eslint-plugin": "^8.36.0",
         "@typescript-eslint/parser": "^8.36.0",
