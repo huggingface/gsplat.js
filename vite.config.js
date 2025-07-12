@@ -28,6 +28,7 @@ export default defineConfig({
   },
   worker: {
     format: 'es',
+    sourcemap: false,
     rollupOptions: {
       output: {
         assetFileNames: 'assets/[name]-[hash][extname]',
