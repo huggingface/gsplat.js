@@ -323,6 +323,7 @@ class VideoRenderProgram extends ShaderProgram {
 
             gl.uniformMatrix4fv(u_projection, false, this._camera.data.projectionMatrix.buffer);
             gl.uniformMatrix4fv(u_view, false, this._camera.data.viewMatrix.buffer);
+            gl.uniform2fv(u_focal, new Float32Array([this._camera.data.fx, this._camera.data.fy]));
             gl.uniform1f(u_time, Math.sin(Date.now() / 1000) / 2 + 1 / 2);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
