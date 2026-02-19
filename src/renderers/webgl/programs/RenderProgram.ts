@@ -479,6 +479,7 @@ class RenderProgram extends ShaderProgram {
 
             gl.uniformMatrix4fv(u_projection, false, this._camera.data.projectionMatrix.buffer);
             gl.uniformMatrix4fv(u_view, false, this._camera.data.viewMatrix.buffer);
+            gl.uniform2fv(u_focal, new Float32Array([this._camera.data.fx, this._camera.data.fy]));
 
             gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
             gl.vertexAttribPointer(positionAttribute, 2, gl.FLOAT, false, 0, 0);
