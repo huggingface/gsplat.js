@@ -2,8 +2,12 @@ name: Publish Package to npmjs
 on:
     release:
         types: [published]
+permissions: {}
+
 jobs:
     build:
+        permissions:
+          contents: read
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
